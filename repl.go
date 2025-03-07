@@ -52,6 +52,16 @@ func getCommands() map[string]cliCommand {
 			description: "List all pokemon currently in your pokedex",
 			callback:    commandPokedex,
 		},
+		"release": {
+			name:        "release",
+			description: "Release a caught pokemon from your pokedex",
+			callback:    commandRelease,
+		},
+		"showoff": {
+			name:        "showoff",
+			description: "Show off a caught pokemon using one of its moves",
+			callback:    commandShowOff,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",

@@ -47,6 +47,14 @@ type PokemonDataResp struct {
 		} `json:"type"`
 	} `json:"types"`
 
+	// Moves information
+	Moves []struct {
+		Move struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"move"`
+	} `json:"moves"`
+
 	// Species reference
 	Species struct {
 		Name string `json:"name"`
