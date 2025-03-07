@@ -62,6 +62,16 @@ func getCommands() map[string]cliCommand {
 			description: "Show off a caught pokemon using one of its moves",
 			callback:    commandShowOff,
 		},
+		"flavor": {
+			name:        "flavor",
+			description: "Display flavor text for a caught pokemon",
+			callback:    commandFlavor,
+		},
+		"describe": {
+			name:        "describe",
+			description: "Display form descriptions for a caught pokemon",
+			callback:    commandDescribe,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",

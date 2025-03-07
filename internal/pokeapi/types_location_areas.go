@@ -67,3 +67,41 @@ type PokemonDataResp struct {
 type PokemonCaptureRateResp struct {
 	CaptureRate int `json:"capture_rate"`
 }
+
+// PokemonSpeciesResp represents the response from the pokemon-species endpoint
+type PokemonSpeciesResp struct {
+	// Basic information
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+
+	// Flavor text entries from different games
+	FlavorTextEntries []struct {
+		FlavorText string `json:"flavor_text"`
+		Language   struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"language"`
+		Version struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"version"`
+	} `json:"flavor_text_entries"`
+
+	// Form descriptions
+	FormDescriptions []struct {
+		Description string `json:"description"`
+		Language    struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"language"`
+	} `json:"form_descriptions"`
+
+	// Genus information (e.g., "Mouse Pokémon" for Pikachu)
+	Genera []struct {
+		Genus    string `json:"genus"`
+		Language struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"language"`
+	} `json:"genera"`
+}
