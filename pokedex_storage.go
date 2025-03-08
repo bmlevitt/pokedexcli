@@ -1,3 +1,6 @@
+// This file implements the persistence layer for the Pokédex CLI application.
+// It handles saving and loading the user's Pokédex data to/from disk, including
+// file locking to ensure data integrity and prevent corruption during concurrent access.
 package main
 
 import (
@@ -32,6 +35,10 @@ type SaveData struct {
 
 // getSaveFilePath returns the full path to the save file.
 // It tries to use the user's home directory, falling back to the current directory.
+//
+// Returns:
+//   - The full path to the save file
+//   - An error if there was a problem determining the path
 func getSaveFilePath() (string, error) {
 	// Try to get user's home directory
 	homeDir, err := os.UserHomeDir()
@@ -42,21 +49,27 @@ func getSaveFilePath() (string, error) {
 	return filepath.Join(homeDir, defaultSaveFile), nil
 }
 
-// getLockFilePath returns the path to the lock file based on the save file path
+// getLockFilePath returns the path to the lock file based on the save file path.
+// The lock file is used to prevent concurrent access to the save file.
+//
+// Parameters:
+//   - saveFilePath: The path to the save file
+//
+// Returns:
+//   - The path to the corresponding lock file
 func getLockFilePath(saveFilePath string) string {
 	return saveFilePath + ".lock"
 }
 
 // savePokedexData saves the current Pokédex and navigation state to disk.
-// It serializes the data as JSON and writes it to the save file.
-// The function uses file locking to prevent concurrent access issues and
-// performs atomic writes by writing to a temporary file first.
+// It uses file locking to ensure data integrity when multiple instances
+// of the application might be running simultaneously.
 //
 // Parameters:
-//   - cfg: The application configuration containing data to save
+//   - cfg: The application configuration containing the Pokédex to save
 //
 // Returns:
-//   - An error if the save operation fails
+//   - An error if the save operation fails for any reason
 func savePokedexData(cfg *config) error {
 	// Get save file path
 	saveFilePath, err := getSaveFilePath()
@@ -117,15 +130,15 @@ func savePokedexData(cfg *config) error {
 	return nil
 }
 
-// loadPokedexData loads saved Pokédex and navigation state from disk.
-// It deserializes the JSON data from the save file and updates the configuration.
-// The function uses file locking to prevent concurrent access issues.
+// loadPokedexData loads the Pokédex data from disk into the application config.
+// It uses file locking to ensure data integrity when multiple instances
+// of the application might be running simultaneously.
 //
 // Parameters:
-//   - cfg: The application configuration to update with loaded data
+//   - cfg: The application configuration to load the Pokédex data into
 //
 // Returns:
-//   - An error if the load operation fails
+//   - An error if the load operation fails for any reason
 func loadPokedexData(cfg *config) error {
 	// Get save file path
 	saveFilePath, err := getSaveFilePath()
@@ -183,12 +196,13 @@ func loadPokedexData(cfg *config) error {
 	return nil
 }
 
-// commandSave explicitly saves the current Pokédex state to disk.
-// This is useful when users want to ensure their progress is saved.
+// commandSave implements the "save" command, which manually saves the Pokédex to disk.
+// This allows users to save their progress at any time, in addition to the automatic
+// saving that occurs after catching or releasing Pokémon.
 //
 // Parameters:
-//   - cfg: The application configuration containing the Pokédex data
-//   - params: Command parameters (unused)
+//   - cfg: The application configuration containing the Pokédex to save
+//   - params: Command parameters (not used in this command)
 //
 // Returns:
 //   - An error if the save operation fails
@@ -201,15 +215,15 @@ func commandSave(cfg *config, params []string) error {
 	return nil
 }
 
-// commandReset clears the user's Pokédex, returning it to an empty state.
-// This allows users to start fresh without existing caught Pokémon.
+// commandReset implements the "reset" command, which clears the Pokédex and starts fresh.
+// This allows users to restart their collection from scratch.
 //
 // Parameters:
-//   - cfg: The application configuration containing the Pokédex to clear
-//   - params: Command parameters (unused)
+//   - cfg: The application configuration containing the Pokédex to reset
+//   - params: Command parameters (not used in this command)
 //
 // Returns:
-//   - An error if the user cancels the operation
+//   - An error if the reset operation fails
 func commandReset(cfg *config, params []string) error {
 	// Confirm with the user before clearing data
 	fmt.Print("Are you sure you want to clear your Pokédex? This cannot be undone. (y/N): ")

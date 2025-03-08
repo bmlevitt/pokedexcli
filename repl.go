@@ -118,12 +118,23 @@ func getCommands() map[string]cliCommand {
 
 // cleanInput normalizes and splits user input into words.
 // It handles whitespace and converts all text to lowercase for case-insensitive command matching.
+// This function is crucial for robust command processing, allowing users to input
+// commands with inconsistent spacing or capitalization.
+//
+// The function splits input by whitespace (spaces, tabs, newlines) and standardizes
+// each word to lowercase. Empty inputs result in an empty slice.
 //
 // Parameters:
 //   - text: The raw input string from the user
 //
 // Returns:
-//   - A slice of lowercase words parsed from the input
+//   - A slice of lowercase words parsed from the input, which may be empty
+//     if the input contained only whitespace
+//
+// Example:
+//
+//	Input: "  Catch  Pikachu  "
+//	Output: []string{"catch", "pikachu"}
 func cleanInput(text string) []string {
 	slice := make([]string, 0)
 	words := strings.Fields(text) // Split on whitespace
@@ -138,13 +149,21 @@ func cleanInput(text string) []string {
 
 // startREPL begins the read-eval-print loop for the CLI application.
 // It continuously reads user input, processes commands, and displays the results
-// until the user chooses to exit the application with the 'exit' command.
+// until the user chooses to exit the application with the 'exit' command or
+// an EOF signal is received (e.g., when piping commands).
 //
-// Each command is looked up in the command map, validated, and executed with
-// the provided parameters. Errors are handled and displayed to the user.
+// Each command is validated against the registered commands map, and if found,
+// is executed with any provided parameters. The REPL handles command errors
+// by displaying appropriate error messages to the user, with more detailed
+// error information shown when debug mode is enabled.
 //
 // Parameters:
 //   - cfg: The application configuration to be shared with all commands
+//
+// Side Effects:
+//   - Continuously reads from stdin and writes to stdout
+//   - Modifies application state through command execution
+//   - May read/write files through save/load commands
 func startREPL(cfg *config) {
 	reader := bufio.NewReader(os.Stdin)
 	commands := getCommands()

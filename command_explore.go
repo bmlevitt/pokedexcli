@@ -1,3 +1,6 @@
+// This file implements the explore command for the Pokédex CLI application.
+// It allows users to discover which Pokémon can be found at specific locations
+// in the Pokémon world, providing a key part of the exploration gameplay.
 package main
 
 import (
@@ -28,15 +31,16 @@ func ValidateLocationParam(params []string) (string, error) {
 // which Pokémon they might encounter at a given location area before attempting to catch them.
 //
 // The function takes a location number as a parameter, which corresponds to the location
-// displayed in the most recent map command.
+// displayed by the map command (1-20). It then fetches a list of Pokémon that can be
+// encountered at that location and displays them to the user.
 //
 // Parameters:
-//   - cfg: The application configuration containing the API client
-//   - params: Command parameters where params[0] is the location number (1-20) to explore
+//   - cfg: The application configuration containing the API client and recent locations
+//   - params: Command parameters where params[0] is the location number to explore
 //
 // Returns:
 //   - An error if no location number is provided, if the number is invalid,
-//     if the number is out of range, or if the API request fails
+//     if the map hasn't been viewed yet, or if there's an issue with the API request
 func commandExplore(cfg *config, params []string) error {
 	// Validate the location parameter
 	locNumStr, err := ValidateLocationParam(params)

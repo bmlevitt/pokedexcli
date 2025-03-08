@@ -9,8 +9,17 @@ import (
 	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
-// ListLocationAreas retrieves a list of location areas from the PokeAPI
-// If pageURL is provided, it fetches that specific page, otherwise fetches the first page
+// ListLocationAreas retrieves a paginated list of location areas from the PokeAPI.
+// Location areas are specific places within the Pokémon world where Pokémon can be encountered.
+// This function supports pagination, allowing navigation through all available locations.
+// Results are cached to improve performance and reduce API calls.
+//
+// Parameters:
+//   - pageURL: Optional URL for a specific page of results. If nil, retrieves the first page.
+//
+// Returns:
+//   - A LocationAreasResp containing the list of location areas and pagination URLs
+//   - An error if the API request fails
 func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
 	endpoint := "/location-area?offset=0&limit=20"
 	fullURL := baseURL + endpoint
@@ -69,7 +78,17 @@ func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
 	return locationAreasResp, nil
 }
 
-// ExploreLocation retrieves information about Pokemon that can be found in a specific location area
+// ExploreLocation retrieves a list of Pokémon that can be encountered at a specific location area.
+// This function is used by the "explore" command to show which Pokémon are available for catching
+// at a given location.
+// Results are cached to improve performance and reduce API calls.
+//
+// Parameters:
+//   - location: The name or ID of the location area to explore (in lowercase with hyphens)
+//
+// Returns:
+//   - A LocationExploreResp containing the list of Pokémon encounters at the location
+//   - An error if the API request fails or the location doesn't exist
 func (c *Client) ExploreLocation(location string) (LocationExploreResp, error) {
 	endpoint := "/location-area/"
 	fullURL := baseURL + endpoint + location

@@ -27,6 +27,17 @@ type config struct {
 // main is the entry point for the Pokédex CLI application.
 // It creates a new API client with a 1-hour cache duration to reduce API calls,
 // initializes an empty Pokédex to store caught Pokémon, and loads any saved data.
+// After initialization, it starts the interactive REPL (Read-Eval-Print Loop)
+// that accepts user commands and processes them.
+//
+// The function handles startup errors gracefully, particularly for loading saved data,
+// by displaying friendly error messages to the user instead of crashing.
+//
+// Side Effects:
+//   - Creates and initializes the global application state
+//   - Attempts to read from the saved data file
+//   - Prints startup messages to stdout
+//   - Starts the interactive command loop that runs until program exit
 func main() {
 	// Initialize the configuration with a new Pokemon API client and default settings
 	cfg := config{

@@ -1,3 +1,6 @@
+// This file implements navigation commands for the Pokédex CLI application.
+// It provides functionality for exploring the Pokémon world map by navigating
+// through paginated lists of location areas from the PokeAPI.
 package main
 
 import (
@@ -6,19 +9,19 @@ import (
 	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
-// commandMap navigates to the next page of Pokémon location areas.
-// It's also available under the 'next' command for more intuitive navigation.
+// commandMap displays the first page of Pokémon location areas.
+// It retrieves data from the PokeAPI and displays a numbered list of up to 20 locations.
+// This command serves as the entry point for map exploration before using 'next' and 'prev'.
 //
-// The function retrieves a list of location areas from the PokeAPI,
-// displaying up to 20 locations at once. It also updates the pagination
-// URLs for subsequent navigation.
+// The function stores the current location list and pagination URLs in the application config
+// for subsequent navigation commands.
 //
 // Parameters:
-//   - cfg: The application configuration containing the pagination URLs
-//   - params: Command parameters (unused)
+//   - cfg: The application configuration for storing location data and pagination URLs
+//   - params: Command parameters (not used in this command)
 //
 // Returns:
-//   - An error if there's an issue with the API request or if there are no more pages
+//   - An error if there's an issue with the API request
 func commandMap(cfg *config, params []string) error {
 	// Get the URL to use - always use the base URL (nil) for the initial map command
 	var locationsResp, err = cfg.pokeapiClient.ListLocationAreas(nil)
@@ -52,18 +55,18 @@ func commandMap(cfg *config, params []string) error {
 }
 
 // commandNext navigates to the next page of Pokémon location areas.
-// This is the primary implementation for both 'next' and 'map' commands.
+// It uses the nextLocationURL stored in the application config to retrieve
+// the next set of up to 20 locations from the PokeAPI.
 //
-// The function retrieves a list of location areas from the PokeAPI,
-// displaying up to 20 locations at once. It also updates the pagination
-// URLs for subsequent navigation.
+// If there are no more pages (nextLocationURL is nil), an error is returned.
+// This command can only be used after the 'map' command has been used at least once.
 //
 // Parameters:
-//   - cfg: The application configuration containing the pagination URLs
-//   - params: Command parameters (unused)
+//   - cfg: The application configuration containing the next page URL
+//   - params: Command parameters (not used in this command)
 //
 // Returns:
-//   - An error if there's an issue with the API request or if there are no more pages
+//   - An error if there are no more pages or if there's an issue with the API request
 func commandNext(cfg *config, params []string) error {
 	// Check if map has been viewed in this session
 	if !cfg.mapViewedThisSession {
@@ -124,14 +127,18 @@ func commandNext(cfg *config, params []string) error {
 }
 
 // commandPrev navigates to the previous page of Pokémon location areas.
-// This is the primary implementation for both 'prev' and 'mapb' commands.
+// It uses the prevLocationURL stored in the application config to retrieve
+// the previous set of up to 20 locations from the PokeAPI.
+//
+// If there are no previous pages (prevLocationURL is nil), an error is returned.
+// This command can only be used after navigating forward at least once with 'next'.
 //
 // Parameters:
-//   - cfg: The application configuration containing the pagination URLs
-//   - params: Command parameters (unused)
+//   - cfg: The application configuration containing the previous page URL
+//   - params: Command parameters (not used in this command)
 //
 // Returns:
-//   - An error if there's an issue with the API request or if there are no previous pages
+//   - An error if there are no previous pages or if there's an issue with the API request
 func commandPrev(cfg *config, params []string) error {
 	// Check if map has been viewed in this session
 	if !cfg.mapViewedThisSession {

@@ -1,3 +1,6 @@
+// This file implements auto-save functionality for the Pokédex CLI application.
+// It provides commands for controlling automatic saving of the user's Pokédex data,
+// including enabling/disabling auto-save and setting the save interval.
 package main
 
 import (
@@ -42,14 +45,15 @@ func commandAutoSave(cfg *config, params []string) error {
 	return savePokedexData(cfg)
 }
 
-// autoSaveIfEnabled automatically saves the Pokédex data if auto-save is enabled.
-// This is a helper function to be called after operations that modify the Pokédex.
+// autoSaveIfEnabled saves the Pokédex data if auto-save is enabled.
+// This function is called after operations that modify the Pokédex,
+// such as catching or releasing Pokémon.
 //
 // Parameters:
-//   - cfg: The application configuration containing the Pokédex data
+//   - cfg: The application configuration containing auto-save settings
 //
 // Returns:
-//   - An error if the save operation fails
+//   - An error if auto-save is enabled but the save operation fails
 func autoSaveIfEnabled(cfg *config) error {
 	if cfg.autoSaveEnabled {
 		return savePokedexData(cfg)
@@ -57,16 +61,16 @@ func autoSaveIfEnabled(cfg *config) error {
 	return nil
 }
 
-// commandSaveInterval sets or displays the interval for auto-saving.
-// This allows users to configure how frequently their Pokédex is saved
-// when changes are made, in terms of number of operations.
+// commandSaveInterval sets how many changes should occur before auto-saving.
+// This allows users to control the frequency of auto-saves, balancing between
+// data safety and performance.
 //
 // Parameters:
-//   - cfg: The application configuration
-//   - params: Command parameters, where params[0] is the interval or omitted
+//   - cfg: The application configuration containing auto-save settings
+//   - params: Command parameters, where params[0] is the number of changes before saving
 //
 // Returns:
-//   - An error if the parameter is invalid
+//   - An error if the parameter is invalid or missing
 func commandSaveInterval(cfg *config, params []string) error {
 	// If no parameter is provided, display the current interval
 	if len(params) == 0 {

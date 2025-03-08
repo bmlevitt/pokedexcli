@@ -1,3 +1,6 @@
+// This file contains tests for the pokecache package.
+// It verifies the functionality of the cache implementation, including
+// creation, adding/retrieving values, and automatic expiration of entries.
 package pokecache
 
 import (
@@ -5,6 +8,8 @@ import (
 	"time"
 )
 
+// TestCreateCache verifies that a new cache can be created successfully.
+// It checks that the internal map is properly initialized and not nil.
 func TestCreateCache(t *testing.T) {
 	cache := NewCache(time.Millisecond)
 	if cache.cache == nil {
@@ -12,6 +17,9 @@ func TestCreateCache(t *testing.T) {
 	}
 }
 
+// TestAddGetCache verifies that values can be added to the cache and retrieved correctly.
+// It tests multiple key-value pairs, including an empty key, to ensure the cache
+// correctly stores and retrieves all values.
 func TestAddGetCache(t *testing.T) {
 	cache := NewCache(time.Millisecond)
 
@@ -45,6 +53,9 @@ func TestAddGetCache(t *testing.T) {
 	}
 }
 
+// TestReap verifies that the cache's automatic cleanup mechanism works correctly.
+// It adds an entry to the cache, waits for longer than the expiration interval,
+// and then checks that the entry has been automatically removed ("reaped").
 func TestReap(t *testing.T) {
 	interval := time.Millisecond * 10
 	cache := NewCache(interval)

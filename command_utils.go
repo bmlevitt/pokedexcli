@@ -1,3 +1,6 @@
+// This file contains utility functions used by various command implementations.
+// It provides common functionality such as parameter validation, error handling,
+// and Pokémon data retrieval that is shared across multiple commands.
 package main
 
 import (
@@ -48,8 +51,8 @@ func ValidatePokemonParam(params []string) (string, error) {
 //   - apiName: The Pokemon name in API format
 //   - nameInfo: Structured information about the Pokemon name in different formats
 //   - pokemonData: The Pokemon data if it exists in the Pokedex
-//   - exists: Whether the Pokemon exists in the Pokedex
-//   - err: An error if no parameter was provided or if the Pokemon doesn't exist
+//   - exists: Boolean indicating if the Pokemon was found in the Pokedex
+//   - err: An error if validation fails or the Pokemon doesn't exist
 func GetPokemonIfExists(cfg *config, params []string) (string, PokemonNameInfo, interface{}, bool, error) {
 	// Check if Pokemon name parameter was provided
 	pokemonParam, err := ValidatePokemonParam(params)
@@ -89,15 +92,16 @@ func GetPokemonIfExists(cfg *config, params []string) (string, PokemonNameInfo, 
 	return apiName, nameInfo, pokemonData, true, nil
 }
 
-// GetTypedPokemonData converts the generic Pokemon data to a typed Pokemon response.
-// This is useful when specific Pokemon data fields are needed.
+// GetTypedPokemonData converts a generic interface to a strongly-typed PokemonDataResp.
+// This function is used when we need to access specific fields of the Pokémon data
+// that was stored in the Pokédex as an interface{}.
 //
 // Parameters:
-//   - pokemonData: The raw Pokemon data from the Pokedex
-//   - pokemonName: The formatted Pokemon name (for error messages)
+//   - pokemonData: The interface{} containing Pokémon data
+//   - pokemonName: The name of the Pokémon, used for error reporting
 //
 // Returns:
-//   - The typed Pokemon data
+//   - A strongly-typed PokemonDataResp containing the Pokémon data
 //   - An error if the conversion fails
 func GetTypedPokemonData(pokemonData interface{}, pokemonName string) (pokeapi.PokemonDataResp, error) {
 	data, ok := pokemonData.(pokeapi.PokemonDataResp)
@@ -109,17 +113,18 @@ func GetTypedPokemonData(pokemonData interface{}, pokemonName string) (pokeapi.P
 	return data, nil
 }
 
-// HandleCommandError processes errors from command functions in a standardized way.
-// It logs detailed error information in debug mode and displays user-friendly messages.
+// HandleCommandError processes errors from commands and determines whether they should be returned.
+// It handles special cases like API errors, displaying appropriate messages to the user.
+// In debug mode, it logs detailed error information for debugging purposes.
 //
 // Parameters:
 //   - cfg: The application configuration containing debug settings
-//   - commandName: The name of the command that encountered the error
+//   - commandName: The name of the command that generated the error
 //   - err: The error to handle
 //
 // Returns:
-//   - true if the command should return the error for further handling
-//   - false if the error has been fully handled and the command should return nil
+//   - A boolean indicating whether the calling function should return the error (true)
+//     or handle it internally and return nil (false)
 func HandleCommandError(cfg *config, commandName string, err error) bool {
 	if err == nil {
 		return false

@@ -1,3 +1,6 @@
+// This file provides utility functions for text formatting and display
+// throughout the PokédexCLI application. It includes functions for formatting
+// Pokémon names, types, moves, and other text elements for user-friendly display.
 package main
 
 import (

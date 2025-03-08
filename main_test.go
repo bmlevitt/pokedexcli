@@ -1,9 +1,14 @@
+// This file contains tests for the main package of the PokédexCLI application.
+// It verifies core functionality like input processing and command handling.
 package main
 
 import (
 	"testing"
 )
 
+// TestCleanInput verifies that the cleanInput function correctly processes user input.
+// It tests various input strings with different whitespace and capitalization patterns
+// to ensure they are properly normalized (trimmed, split, and converted to lowercase).
 func TestCleanInput(t *testing.T) {
 	cases := []struct {
 		input    string

@@ -4,5 +4,8 @@ pokedexcli
 # Test files
 test_commands.sh
 
+# Internal documentation files
+docs_standard.md
+
 # Cursor files
 .cursor/

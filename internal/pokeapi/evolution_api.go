@@ -11,7 +11,17 @@ import (
 	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
-// GetEvolutionChainBySpecies gets the evolution chain for a Pokemon species
+// GetEvolutionChainBySpecies retrieves the complete evolution chain for a specific Pokémon.
+// This function first gets species data for the Pokémon, then uses the evolution chain URL
+// from that data to fetch the full evolution chain. It's used by the "evolve" command
+// to determine possible evolutions for a Pokémon.
+//
+// Parameters:
+//   - pokemonName: The name of the Pokémon to get evolution chain for (in lowercase with hyphens)
+//
+// Returns:
+//   - An EvolutionChainResp containing the complete evolution chain data
+//   - An error if the API request fails, the Pokémon doesn't exist, or it has no evolution data
 func (c *Client) GetEvolutionChainBySpecies(pokemonName string) (EvolutionChainResp, error) {
 	// First, get the species data to find the evolution chain URL
 	speciesData, err := c.GetPokemonSpecies(pokemonName)
@@ -31,17 +41,30 @@ func (c *Client) GetEvolutionChainBySpecies(pokemonName string) (EvolutionChainR
 		return EvolutionChainResp{}, fmt.Errorf("invalid evolution chain URL format: %s", evolutionURL)
 	}
 
-	idStr := parts[len(parts)-2]
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return EvolutionChainResp{}, fmt.Errorf("invalid evolution chain ID: %w", err)
+	// The ID should be the last part of the URL (minus any trailing slash)
+	idStr := parts[len(parts)-1]
+	if idStr == "" && len(parts) >= 3 {
+		idStr = parts[len(parts)-2] // Handle trailing slash
 	}
 
-	// Get the evolution chain data
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return EvolutionChainResp{}, fmt.Errorf("invalid evolution chain ID: %s", idStr)
+	}
+
+	// Now get the evolution chain data
 	return c.GetEvolutionChain(id)
 }
 
-// Helper function to extract the evolution chain URL from the species data
+// getEvolutionChainURL extracts the evolution chain URL from a PokemonSpeciesResp.
+// This is a helper function for GetEvolutionChainBySpecies.
+//
+// Parameters:
+//   - speciesData: The species data containing the evolution chain URL
+//
+// Returns:
+//   - The URL string for the evolution chain
+//   - An error if the URL is missing or empty
 func getEvolutionChainURL(speciesData PokemonSpeciesResp) (string, error) {
 	if speciesData.EvolutionChain.URL == "" {
 		return "", fmt.Errorf("evolution chain URL not found")
@@ -49,7 +72,16 @@ func getEvolutionChainURL(speciesData PokemonSpeciesResp) (string, error) {
 	return speciesData.EvolutionChain.URL, nil
 }
 
-// GetEvolutionChain gets the evolution chain for a given ID
+// GetEvolutionChain retrieves evolution chain data directly by its ID.
+// Evolution chains describe how Pokémon can evolve from one form to another.
+// Results are cached to improve performance and reduce API calls.
+//
+// Parameters:
+//   - id: The unique identifier of the evolution chain to retrieve
+//
+// Returns:
+//   - An EvolutionChainResp containing the complete evolution chain data
+//   - An error if the API request fails or the evolution chain doesn't exist
 func (c *Client) GetEvolutionChain(id int) (EvolutionChainResp, error) {
 	endpoint := "/evolution-chain/"
 	fullURL := baseURL + endpoint + strconv.Itoa(id)

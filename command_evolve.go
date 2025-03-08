@@ -154,16 +154,21 @@ func commandEvolve(cfg *config, params []string) error {
 	return nil
 }
 
-// findEvolutionsFor searches through an evolution chain to find the possible
-// evolutions for a given Pokémon.
+// findEvolutionsFor recursively searches an evolution chain to find and return
+// all possible evolutions for a given Pokémon by name.
+//
+// The function employs a depth-first search through the evolution chain, checking:
+// 1. If the current chain link matches the target Pokémon
+// 2. If any immediate evolutions match the target Pokémon
+// 3. Recursively searching deeper evolution branches
 //
 // Parameters:
-//   - pokemonName: The name of the Pokémon to find evolutions for
+//   - pokemonName: The name of the Pokémon to find evolutions for (in API format)
 //   - chainLink: The current link in the evolution chain to search
 //
 // Returns:
-//   - A slice of ChainLink objects representing possible evolutions
-//   - An error if the Pokémon cannot be found in the evolution chain
+//   - A slice of ChainLink objects representing possible evolutions for the Pokémon
+//   - An error if the Pokémon cannot be found anywhere in the provided evolution chain
 func findEvolutionsFor(pokemonName string, chainLink pokeapi.ChainLink) ([]pokeapi.ChainLink, error) {
 	// Check if this is our pokemon
 	if chainLink.Species.Name == pokemonName {

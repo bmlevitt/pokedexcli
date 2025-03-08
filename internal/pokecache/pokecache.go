@@ -2,6 +2,24 @@
 // automatic expiration of entries based on a configurable time interval.
 // It is used primarily to store API responses to reduce the number of external
 // API calls and improve application performance.
+//
+// The package implements a key-value cache that automatically removes expired
+// entries in the background. Cache operations are thread-safe, making it suitable
+// for concurrent access in applications with multiple goroutines.
+//
+// Usage Example:
+//
+//	// Create a new cache with 5-minute expiration
+//	cache := pokecache.NewCache(5 * time.Minute)
+//
+//	// Store data in the cache
+//	cache.Add("key1", []byte("value1"))
+//
+//	// Retrieve data from the cache
+//	data, found := cache.Get("key1")
+//	if found {
+//	    // Use the data
+//	}
 package pokecache
 
 import (

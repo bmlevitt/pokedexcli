@@ -1,6 +1,28 @@
 // Package pokeapi provides a client for interacting with the PokeAPI service.
 // It handles making HTTP requests, caching responses, and provides typed
 // structures for working with Pokémon data.
+//
+// This package is organized into several components:
+//   - Client: The main interface for making API requests
+//   - Data types: Structured representations of API responses
+//   - API endpoint functions: Methods for accessing specific PokeAPI endpoints
+//
+// The package uses the pokecache system to reduce API calls by caching responses,
+// which improves performance and respects rate limiting on the PokeAPI service.
+//
+// Usage Example:
+//
+//	// Create a new client with 1-hour cache duration
+//	client := pokeapi.NewClient(time.Hour)
+//
+//	// Get data for a specific Pokemon
+//	pokemon, err := client.GetPokemonData("pikachu")
+//	if err != nil {
+//	    // Handle error
+//	}
+//
+//	// Use the Pokemon data
+//	fmt.Println(pokemon.Name, pokemon.Height, pokemon.Weight)
 package pokeapi
 
 import (

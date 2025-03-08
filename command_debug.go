@@ -12,6 +12,10 @@ import "fmt"
 //
 // Returns:
 //   - Always returns nil as this command cannot fail
+//
+// Side Effects:
+//   - Modifies the debugMode flag in the application configuration
+//   - Prints the current debug mode status to stdout
 func commandToggleDebug(cfg *config, params []string) error {
 	// Toggle the debug mode setting
 	cfg.debugMode = !cfg.debugMode

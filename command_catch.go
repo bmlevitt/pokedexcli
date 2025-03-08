@@ -20,7 +20,12 @@ import (
 //   - params: Command parameters where params[0] is the Pokémon name to catch
 //
 // Returns:
-//   - An error if no Pokémon name is provided or if there's an issue with the API request
+//   - An error if:
+//   - No Pokémon name is provided (InvalidParameterError)
+//   - The specified Pokémon doesn't exist (InvalidPokemonNameError)
+//   - There's an API connection issue (NetworkError)
+//   - The API response cannot be processed (InternalError)
+//   - Returns nil on successful execution, even if the catch attempt fails
 func commandCatch(cfg *config, params []string) error {
 	// Validate the Pokemon parameter
 	pokemonName, err := ValidatePokemonParam(params)

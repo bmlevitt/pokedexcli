@@ -9,7 +9,23 @@ import (
 	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
-// GetPokemonData retrieves detailed information about a specific Pokemon
+// GetPokemonData retrieves detailed information about a specific Pokémon from the PokeAPI.
+// This function fetches comprehensive data including stats, types, moves, and more.
+// Results are cached to improve performance and reduce API calls.
+//
+// The function first checks the cache for the requested data. If not found, it makes
+// an HTTP request to the PokeAPI, processes the response, and stores it in the cache
+// for future use. This caching strategy helps reduce API calls and improves performance.
+//
+// Parameters:
+//   - pokemon: The name or ID of the Pokémon to retrieve (in lowercase with hyphens)
+//
+// Returns:
+//   - A PokemonDataResp struct containing the Pokémon's data
+//   - An error with specific error types:
+//   - NetworkError: If there's an issue with creating or executing the HTTP request
+//   - NotFoundError: If the requested Pokémon doesn't exist
+//   - InternalError: If there's an issue parsing the API response
 func (c *Client) GetPokemonData(pokemon string) (PokemonDataResp, error) {
 	endpoint := "/pokemon/"
 	fullURL := baseURL + endpoint + pokemon
@@ -65,7 +81,17 @@ func (c *Client) GetPokemonData(pokemon string) (PokemonDataResp, error) {
 	return pokemonDataResp, nil
 }
 
-// GetPokemonCaptureRate retrieves the capture rate for a specific Pokemon
+// GetPokemonCaptureRate retrieves the capture rate for a specific Pokémon.
+// The capture rate is used in the game mechanics for determining how easy it is
+// to catch a Pokémon, with higher values being easier to catch.
+// This function fetches species data which includes the capture rate.
+//
+// Parameters:
+//   - pokemon: The name or ID of the Pokémon (in lowercase with hyphens)
+//
+// Returns:
+//   - A PokemonCaptureRateResp containing the capture rate value
+//   - An error if the API request fails or the Pokémon doesn't exist
 func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, error) {
 	// First, we need to fetch the species URL from the pokemon data
 	pokemonData, err := c.GetPokemonData(pokemon)
@@ -146,7 +172,16 @@ func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, 
 	return PokemonCaptureRateResp{CaptureRate: int(captureRate)}, nil
 }
 
-// GetPokemonSpecies retrieves detailed species information about a specific Pokemon
+// GetPokemonSpecies retrieves detailed species information about a Pokémon.
+// This includes Pokédex entries (flavor text), genus information, and evolution chain references.
+// This data is used for the "describe" command and for evolution mechanics.
+//
+// Parameters:
+//   - pokemon: The name or ID of the Pokémon species (in lowercase with hyphens)
+//
+// Returns:
+//   - A PokemonSpeciesResp containing the species data
+//   - An error if the API request fails or the species doesn't exist
 func (c *Client) GetPokemonSpecies(pokemon string) (PokemonSpeciesResp, error) {
 	endpoint := "/pokemon-species/"
 	fullURL := baseURL + endpoint + pokemon

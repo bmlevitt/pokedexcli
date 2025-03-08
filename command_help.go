@@ -17,6 +17,9 @@ import (
 //
 // Returns:
 //   - Always returns nil as this command cannot fail under normal circumstances
+//
+// Side Effects:
+//   - Prints the welcome message and list of available commands to stdout
 func commandHelp(cfg *config, params []string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("-----")
