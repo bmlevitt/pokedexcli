@@ -65,7 +65,7 @@ func TestFormatPokemonInput(t *testing.T) {
 			},
 		},
 		{
-			name:  "Name with spaces",
+			name:  "Name with spaces (Mr Mime)",
 			input: "mr mime",
 			expected: PokemonNameInfo{
 				Input:     "mr mime",
@@ -74,12 +74,75 @@ func TestFormatPokemonInput(t *testing.T) {
 			},
 		},
 		{
-			name:  "Name with hyphen",
+			name:  "Name with period (Mr. Mime)",
+			input: "mr. mime",
+			expected: PokemonNameInfo{
+				Input:     "mr. mime",
+				Formatted: "Mr-mime",
+				APIFormat: "mr-mime",
+			},
+		},
+		{
+			name:  "Name with period and junior (Mime Jr.)",
+			input: "mime jr.",
+			expected: PokemonNameInfo{
+				Input:     "mime jr.",
+				Formatted: "Mime-jr",
+				APIFormat: "mime-jr",
+			},
+		},
+		{
+			name:  "Name with colon (Type: Null)",
+			input: "type: null",
+			expected: PokemonNameInfo{
+				Input:     "type: null",
+				Formatted: "Type-null",
+				APIFormat: "type-null",
+			},
+		},
+		{
+			name:  "Name with hyphen (Ho-oh)",
 			input: "ho-oh",
 			expected: PokemonNameInfo{
 				Input:     "ho-oh",
 				Formatted: "Ho-oh",
 				APIFormat: "ho-oh",
+			},
+		},
+		{
+			name:  "Name with spaces that has a hyphen variant (Ho oh)",
+			input: "ho oh",
+			expected: PokemonNameInfo{
+				Input:     "ho oh",
+				Formatted: "Ho-oh",
+				APIFormat: "ho-oh",
+			},
+		},
+		{
+			name:  "Multi-part name (Tapu Koko)",
+			input: "tapu koko",
+			expected: PokemonNameInfo{
+				Input:     "tapu koko",
+				Formatted: "Tapu-koko",
+				APIFormat: "tapu-koko",
+			},
+		},
+		{
+			name:  "Name with Z (Porygon Z)",
+			input: "porygon z",
+			expected: PokemonNameInfo{
+				Input:     "porygon z",
+				Formatted: "Porygon-z",
+				APIFormat: "porygon-z",
+			},
+		},
+		{
+			name:  "Name with trailing o (Jangmo-o)",
+			input: "jangmo o",
+			expected: PokemonNameInfo{
+				Input:     "jangmo o",
+				Formatted: "Jangmo-o",
+				APIFormat: "jangmo-o",
 			},
 		},
 	}

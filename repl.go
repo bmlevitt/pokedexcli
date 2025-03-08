@@ -205,7 +205,25 @@ func startREPL(cfg *config) {
 		commandName := cleaned[0]
 		parameters := []string{}
 		if len(cleaned) > 1 {
-			parameters = cleaned[1:]
+			// For Pokemon-related commands that take a Pokemon name,
+			// combine all parameters after the command into a single Pokemon name
+			pokemonCommands := map[string]bool{
+				"catch":    true,
+				"inspect":  true,
+				"release":  true,
+				"showoff":  true,
+				"describe": true,
+				"evolve":   true,
+			}
+			
+			if pokemonCommands[commandName] && len(cleaned) > 1 {
+				// Join all parameters as a single Pokemon name parameter
+				pokemonName := strings.Join(cleaned[1:], " ")
+				parameters = []string{pokemonName}
+			} else {
+				// For other commands, use normal parameter handling
+				parameters = cleaned[1:]
+			}
 		}
 
 		// Find the command in our available commands

@@ -161,6 +161,31 @@ func FormatPokemonName(name string) string {
 // Returns:
 //   - The name in API format with lowercase and hyphens instead of spaces
 func ConvertToAPIFormat(formattedName string) string {
+	// Handle special case Pokemon names
+	specialCasePokemon := map[string]string{
+		"mr mime":   "mr-mime",
+		"mr. mime":  "mr-mime",
+		"mime jr":   "mime-jr",
+		"mime jr.":  "mime-jr",
+		"type null": "type-null",
+		"type: null": "type-null",
+		"tapu koko": "tapu-koko",
+		"tapu lele": "tapu-lele",
+		"tapu bulu": "tapu-bulu",
+		"tapu fini": "tapu-fini",
+		"ho oh":    "ho-oh",
+		"porygon z": "porygon-z",
+		"jangmo o":  "jangmo-o",
+		"hakamo o":  "hakamo-o",
+		"kommo o":   "kommo-o",
+	}
+
+	// Check if this is a special case Pokemon name (case insensitive)
+	lowerName := strings.ToLower(formattedName)
+	if apiName, isSpecial := specialCasePokemon[lowerName]; isSpecial {
+		return apiName
+	}
+
 	// Handle special cases for "é" character in "Pokémon"
 	formattedName = strings.ReplaceAll(formattedName, "é", "e")
 
