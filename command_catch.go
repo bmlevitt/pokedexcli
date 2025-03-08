@@ -58,9 +58,30 @@ func commandCatch(cfg *config, params []string) error {
 	}
 
 	captureRate := resp.CaptureRate
-	fmt.Printf("Throwing a Pokéball at %s...\n", nameInfo.Formatted)
+
+	// Scale the capture rate for rare Pokémon
+	// Pokémon with capture rates below 50 are considered rare
+	// The scaling ensures rare Pokémon (capture rate < 50) have at least a 10-20% catch rate
+	// This means they should be caught within 5-10 attempts on average
+	effectiveCaptureRate := captureRate
+	isRare := captureRate < 50
+	if isRare {
+		// For rare Pokémon, boost the capture rate to be between 25-50
+		// This gives approximately a 10-20% chance per throw
+		effectiveCaptureRate = captureRate + (50-captureRate)/2
+	}
+
 	randNum := rand.Intn(256)
-	caught := randNum < captureRate
+	caught := randNum < effectiveCaptureRate
+
+	// Determine what ball to use in the message
+	if isRare && caught {
+		fmt.Println("You found a Masterball lying nearby...!")
+		fmt.Printf("Throwing a Masterball at %s...\n", nameInfo.Formatted)
+	} else {
+		fmt.Printf("Throwing a Pokéball at %s...\n", nameInfo.Formatted)
+	}
+
 	if caught {
 		pokeData, err := cfg.pokeapiClient.GetPokemonData(nameInfo.APIFormat)
 		if err != nil {
