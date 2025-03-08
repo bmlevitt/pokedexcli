@@ -12,16 +12,17 @@ import (
 // It includes API clients, navigation state, and the user's Pokédex data.
 type config struct {
 	pokeapiClient        pokeapi.Client                     // Client for making Pokemon API requests
-	nextLocationURL      *string                            // URL for the next page of locations
-	prevLocationURL      *string                            // URL for the previous page of locations
+	nextLocationURL      *string                            // URL for the next page of map locations
+	prevLocationURL      *string                            // URL for the previous page of map locations
 	pokedex              map[string]pokeapi.PokemonDataResp // Map of caught Pokemon indexed by name
 	autoSaveEnabled      bool                               // Whether to automatically save after changes
 	autoSaveInterval     int                                // How many changes before auto-saving (if enabled)
 	changesSinceSync     int                                // Counter for changes since last save
-	recentLocations      []pokeapi.NamedAPIResource         // Most recent list of locations displayed
+	recentLocations      []pokeapi.NamedAPIResource         // Most recent list of map locations displayed
 	mapViewedThisSession bool                               // Whether the map command has been used in this session
-	mutex                sync.RWMutex                       // Mutex to protect access to shared data
 	debugMode            bool                               // Whether to show detailed error messages
+	mutex                sync.RWMutex                       // Mutex to protect access to shared data
+	// Only one mutex -- risk is low in this simple app
 }
 
 // main is the entry point for the Pokédex CLI application.

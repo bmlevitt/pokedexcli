@@ -33,16 +33,8 @@ func commandMap(cfg *config, params []string) error {
 		return nil
 	}
 
-	// Update shared state with a lock
-	cfg.mutex.Lock()
-	// Update pagination URLs
-	cfg.nextLocationURL = locationsResp.Next
-	cfg.prevLocationURL = locationsResp.Previous
-	// Store the location results for reference by other commands
-	cfg.recentLocations = locationsResp.Results
-	// Mark that the map has been viewed in this session
-	cfg.mapViewedThisSession = true
-	cfg.mutex.Unlock()
+	// Update shared state with the utility function
+	UpdateLocationState(cfg, locationsResp, true)
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
@@ -107,14 +99,8 @@ func commandNext(cfg *config, params []string) error {
 		return nil
 	}
 
-	// Update shared state with a lock
-	cfg.mutex.Lock()
-	// Update pagination URLs
-	cfg.nextLocationURL = locationsResp.Next
-	cfg.prevLocationURL = locationsResp.Previous
-	// Store the location results for reference by other commands
-	cfg.recentLocations = locationsResp.Results
-	cfg.mutex.Unlock()
+	// Update shared state with the utility function
+	UpdateLocationState(cfg, locationsResp, false)
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
@@ -179,14 +165,8 @@ func commandPrev(cfg *config, params []string) error {
 		return nil
 	}
 
-	// Update shared state with a lock
-	cfg.mutex.Lock()
-	// Update pagination URLs
-	cfg.nextLocationURL = locationsResp.Next
-	cfg.prevLocationURL = locationsResp.Previous
-	// Store the location results for reference by other commands
-	cfg.recentLocations = locationsResp.Results
-	cfg.mutex.Unlock()
+	// Update shared state with the utility function
+	UpdateLocationState(cfg, locationsResp, false)
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {

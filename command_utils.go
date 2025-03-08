@@ -147,3 +147,24 @@ func HandleCommandError(cfg *config, commandName string, err error) bool {
 	fmt.Println("-----")
 	return false
 }
+
+// UpdateLocationState updates the shared location state with proper mutex locking.
+// It updates the pagination URLs and recent locations based on the API response.
+// If markMapViewed is true, it will also set the mapViewedThisSession flag to true.
+func UpdateLocationState(cfg *config, locationsResp pokeapi.LocationAreasResp, markMapViewed bool) {
+	// Update shared state with a lock
+	cfg.mutex.Lock()
+	defer cfg.mutex.Unlock()
+
+	// Update pagination URLs
+	cfg.nextLocationURL = locationsResp.Next
+	cfg.prevLocationURL = locationsResp.Previous
+
+	// Store the location results for reference by other commands
+	cfg.recentLocations = locationsResp.Results
+
+	// Optionally mark that the map has been viewed
+	if markMapViewed {
+		cfg.mapViewedThisSession = true
+	}
+}
