@@ -18,6 +18,7 @@ type config struct {
 	autoSaveEnabled  bool                               // Whether to automatically save after changes
 	autoSaveInterval int                                // How many changes before auto-saving (if enabled)
 	changesSinceSync int                                // Counter for changes since last save
+	recentLocations  []pokeapi.NamedAPIResource         // Most recent list of locations displayed
 }
 
 // main initializes the application and starts the command-line interface.

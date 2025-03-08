@@ -55,15 +55,12 @@ func (c *Client) GetEvolutionChain(id int) (EvolutionChainResp, error) {
 	// Check cache
 	data, ok := c.cache.Get(fullURL)
 	if ok {
-		// fmt.Println("**cache hit**") // hide later
 		evolutionChainResp := EvolutionChainResp{}
 		err := json.Unmarshal(data, &evolutionChainResp)
 		if err != nil {
 			return EvolutionChainResp{}, err
 		}
 		return evolutionChainResp, nil
-	} else {
-		// fmt.Println("**cache miss**") // hide later
 	}
 
 	// Create a new HTTP request

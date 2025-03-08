@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -28,6 +29,9 @@ func commandMap(cfg *config, params []string) error {
 	cfg.nextLocationURL = locationsResp.Next
 	cfg.prevLocationURL = locationsResp.Previous
 
+	// Store the location results for reference by other commands
+	cfg.recentLocations = locationsResp.Results
+
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
 		fmt.Printf("%d. %s\n", i+1, loc.Name)
@@ -50,8 +54,13 @@ func commandMap(cfg *config, params []string) error {
 // Returns:
 //   - An error if there's an issue with the API request or if there are no more pages
 func commandNext(cfg *config, params []string) error {
-	// Get the URL to use - either the next page URL or the base URL
-	var locationsResp, err = cfg.pokeapiClient.ListLocationAreas(cfg.nextLocationURL)
+	// Check if there's a next page URL
+	if cfg.nextLocationURL == nil {
+		return errors.New("you are on the last page")
+	}
+
+	// Get the next page of locations
+	locationsResp, err := cfg.pokeapiClient.ListLocationAreas(cfg.nextLocationURL)
 	if err != nil {
 		return err
 	}
@@ -59,6 +68,9 @@ func commandNext(cfg *config, params []string) error {
 	// Update pagination URLs
 	cfg.nextLocationURL = locationsResp.Next
 	cfg.prevLocationURL = locationsResp.Previous
+
+	// Store the location results for reference by other commands
+	cfg.recentLocations = locationsResp.Results
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
@@ -78,12 +90,12 @@ func commandNext(cfg *config, params []string) error {
 // Returns:
 //   - An error if there's an issue with the API request or if there are no previous pages
 func commandPrev(cfg *config, params []string) error {
-	// Check if there is a previous page
+	// Check if there's a previous page URL
 	if cfg.prevLocationURL == nil {
-		return fmt.Errorf("you're already at the first page")
+		return errors.New("you are on the first page")
 	}
 
-	// Get the previous page
+	// Get the previous page of locations
 	locationsResp, err := cfg.pokeapiClient.ListLocationAreas(cfg.prevLocationURL)
 	if err != nil {
 		return err
@@ -92,6 +104,9 @@ func commandPrev(cfg *config, params []string) error {
 	// Update pagination URLs
 	cfg.nextLocationURL = locationsResp.Next
 	cfg.prevLocationURL = locationsResp.Previous
+
+	// Store the location results for reference by other commands
+	cfg.recentLocations = locationsResp.Results
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {

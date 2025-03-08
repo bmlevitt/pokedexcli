@@ -157,14 +157,11 @@ func startREPL(cfg *config) {
 
 		// Get command name
 		commandName := words[0]
-		// fmt.Printf("command entered: %s | ", commandName) // hide later
 
 		// Get second word as parameter if it exists
 		if len(words) > 1 {
 			parameters = append(parameters, words[1])
 		}
-
-		// fmt.Printf("parameter(s) applied: %s\n", parameters) // hide later
 
 		// Look up and execute the command if it exists
 		command, exists := getCommands()[commandName]

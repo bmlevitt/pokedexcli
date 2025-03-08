@@ -18,15 +18,12 @@ func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
 
 	data, ok := c.cache.Get(fullURL)
 	if ok {
-		// fmt.Println("**cache hit**") // hide later
 		locationAreasResp := LocationAreasResp{}
 		err := json.Unmarshal(data, &locationAreasResp)
 		if err != nil {
 			return LocationAreasResp{}, err
 		}
 		return locationAreasResp, nil
-	} else {
-		// fmt.Println("**cache miss**") // hide later
 	}
 
 	// Create a new HTTP request
@@ -71,19 +68,14 @@ func (c *Client) ExploreLocation(location string) (LocationExploreResp, error) {
 	endpoint := "/location-area/"
 	fullURL := baseURL + endpoint + location
 
-	fmt.Printf("exploring %s...\n", location)
-
 	data, ok := c.cache.Get(fullURL)
 	if ok {
-		// fmt.Println("**cache hit**") // hide later
 		locationExploreResp := LocationExploreResp{}
 		err := json.Unmarshal(data, &locationExploreResp)
 		if err != nil {
 			return LocationExploreResp{}, err
 		}
 		return locationExploreResp, nil
-	} else {
-		// fmt.Println("**cache miss**") // hide later
 	}
 
 	// Create a new HTTP request

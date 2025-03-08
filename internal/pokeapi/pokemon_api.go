@@ -15,15 +15,12 @@ func (c *Client) GetPokemonData(pokemon string) (PokemonDataResp, error) {
 	// Check cache
 	data, ok := c.cache.Get(fullURL)
 	if ok {
-		// fmt.Println("**cache hit**") // hide later
 		pokemonDataResp := PokemonDataResp{}
 		err := json.Unmarshal(data, &pokemonDataResp)
 		if err != nil {
 			return PokemonDataResp{}, err
 		}
 		return pokemonDataResp, nil
-	} else {
-		// fmt.Println("**cache miss**") // hide later
 	}
 
 	// Create a new HTTP request
@@ -77,7 +74,6 @@ func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, 
 	// Check cache
 	data, ok := c.cache.Get(speciesURL)
 	if ok {
-		// fmt.Println("**cache hit**") // hide later
 		var speciesResp map[string]interface{}
 		err := json.Unmarshal(data, &speciesResp)
 		if err != nil {
@@ -91,8 +87,6 @@ func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, 
 		}
 
 		return PokemonCaptureRateResp{CaptureRate: int(captureRate)}, nil
-	} else {
-		// fmt.Println("**cache miss**") // hide later
 	}
 
 	// Create a new HTTP request
@@ -146,15 +140,12 @@ func (c *Client) GetPokemonSpecies(pokemon string) (PokemonSpeciesResp, error) {
 	// Check cache
 	data, ok := c.cache.Get(fullURL)
 	if ok {
-		// fmt.Println("**cache hit**") // hide later
 		speciesResp := PokemonSpeciesResp{}
 		err := json.Unmarshal(data, &speciesResp)
 		if err != nil {
 			return PokemonSpeciesResp{}, err
 		}
 		return speciesResp, nil
-	} else {
-		// fmt.Println("**cache miss**") // hide later
 	}
 
 	// Create a new HTTP request
