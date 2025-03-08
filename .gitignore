@@ -16,3 +16,5 @@ repl.log
 
 # Output of the go coverage tool
 *.out 
+# Cursor
+.cursor/rules

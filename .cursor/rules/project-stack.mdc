@@ -1,9 +1,0 @@
----
-description: A list of tools used for the current project
-globs: 
-alwaysApply: false
----
-# Current Project Stack
-- Python
-- Go
-- Postgres
