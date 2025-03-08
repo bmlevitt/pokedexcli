@@ -25,16 +25,6 @@ func getCommands() map[string]cliCommand {
 			description: "List available commands",
 			callback:    commandHelp,
 		},
-		"map": {
-			name:        "map",
-			description: "List map locations",
-			callback:    commandMap,
-		},
-		"mapb": {
-			name:        "mapb",
-			description: "List previous map locations",
-			callback:    commandMapb,
-		},
 		"explore": {
 			name:        "explore",
 			description: "List the pokemon found at the specified map location",
@@ -65,14 +55,9 @@ func getCommands() map[string]cliCommand {
 			description: "Show off a caught pokemon using one of its moves",
 			callback:    commandShowOff,
 		},
-		"flavor": {
-			name:        "flavor",
-			description: "Display flavor text for a caught pokemon",
-			callback:    commandFlavor,
-		},
 		"describe": {
 			name:        "describe",
-			description: "Display form descriptions for a caught pokemon",
+			description: "Display information about a caught pokemon",
 			callback:    commandDescribe,
 		},
 		"evolve": {
@@ -99,6 +84,21 @@ func getCommands() map[string]cliCommand {
 			name:        "saveinterval",
 			description: "Set how often to auto-save (number of changes)",
 			callback:    commandSaveInterval,
+		},
+		"map": {
+			name:        "map",
+			description: "Navigates to the first page of locations",
+			callback:    commandMap,
+		},
+		"next": {
+			name:        "next",
+			description: "Navigate to the next page of locations",
+			callback:    commandNext,
+		},
+		"prev": {
+			name:        "prev",
+			description: "Navigate to the previous page of locations",
+			callback:    commandPrev,
 		},
 		"exit": {
 			name:        "exit",

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // commandShowOff displays a Pokémon from the user's Pokédex performing a random move.
@@ -89,5 +92,5 @@ func capitalizeFirstLetter(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	return strings.ToUpper(s[:1]) + s[1:]
+	return cases.Title(language.English).String(s)
 }

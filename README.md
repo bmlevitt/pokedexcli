@@ -13,8 +13,7 @@ A feature-rich, interactive Pokémon encyclopedia right in your terminal! Pokéd
 - **Manage Your Pokédex**: Keep track of all your caught Pokémon
 - **Pokémon Details**: View detailed information about Pokémon in your collection
 - **Evolution**: Evolve your Pokémon to their next forms
-- **Flavor Text**: Read interesting Pokédex entries about your Pokémon
-- **Form Descriptions**: Learn about different Pokémon forms
+- **Pokémon Information**: Get interesting Pokédex entries and descriptions
 - **Show Off**: Display your Pokémon's moves in action
 - **Persistence**: Your Pokédex is automatically saved between sessions, so you can continue where you left off
 
@@ -47,17 +46,17 @@ A feature-rich, interactive Pokémon encyclopedia right in your terminal! Pokéd
 After starting the application, you'll be presented with a command prompt. Here's a list of available commands:
 
 - `help`: Display a list of all available commands
-- `map`: Show the next page of location areas
-- `mapb`: Show the previous page of location areas
+- `map`: Explore the first page of map locations
+- `next`: Navigate to the next page of map locations
+- `prev`: Navigate to the previous page of map locations
 - `explore [location]`: List Pokémon that can be found at a specific location
 - `catch [pokemon]`: Try to catch a specific Pokémon
 - `inspect [pokemon]`: View details about a Pokémon in your collection
 - `pokedex`: List all Pokémon in your collection
 - `release [pokemon]`: Remove a Pokémon from your collection
 - `showoff [pokemon]`: Display one of your Pokémon's moves
-- `flavor [pokemon]`: Show the Pokédex flavor text for a Pokémon in your collection
-- `describe [pokemon]`: Show form descriptions for a Pokémon in your collection
-- `evolve [pokemon] [evolution_choice]`: Evolve a Pokémon from your collection to its next form
+- `describe [pokemon]`: Display information and Pokédex entries for a Pokémon
+- `evolve [pokemon]`: Evolve a Pokémon from your collection to its next form
 - `save`: Manually save your current Pokédex to a file
 - `reset`: Clear your Pokédex and start fresh
 - `autosave [on/off]`: Enable or disable automatic saving
@@ -76,7 +75,7 @@ Pokedex > map
 5. sinnoh-pokemon-league-area
 ...
 
-Pokedex > explore eterna-city-area
+Pokedex > explore 1
 Exploring eterna-city-area...
 Found Pokemon:
 1. drifblim
@@ -101,6 +100,10 @@ Stats:
 - Special-Attack: 100
 - Special-Defense: 35
 - Speed: 80
+
+Pokedex > describe gastly
+Gastly, the Gas Pokémon
+- With its gas-like body, it can sneak into any place it desires. However, it can be blown away by wind. (From Pokémon Ultra Sun)
 
 Pokedex > evolve gastly
 Evolving gastly into haunter...

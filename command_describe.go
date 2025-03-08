@@ -4,15 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
-// commandDescribe displays form descriptions for a Pokémon in the user's Pokédex.
-// This command retrieves species data which contains descriptive information about
-// the Pokémon's different forms. It filters for English descriptions and randomly
-// selects one to display.
+// commandDescribe provides information about a Pokémon in the user's Pokédex.
+// This enhanced command combines form descriptions and flavor text to give comprehensive
+// information about the Pokémon.
 //
-// If no form descriptions are available in English, the function falls back to
-// displaying the Pokémon's genus (e.g., "Mouse Pokémon").
+// The command displays:
+// 1. The Pokémon's name and genus (e.g., "Pikachu, the Mouse Pokémon")
+// 2. A flavor text entry from one of the Pokémon games, with the game name in parentheses
 //
 // Parameters:
 //   - cfg: The application configuration containing the Pokédex and API client
@@ -34,46 +38,79 @@ func commandDescribe(cfg *config, params []string) error {
 		return fmt.Errorf("%s is not in your pokedex", pokemonName)
 	}
 
-	// Fetch species data which contains descriptions
+	// Fetch species data which contains descriptions and flavor text
 	speciesData, err := cfg.pokeapiClient.GetPokemonSpecies(pokemonName)
 	if err != nil {
 		return fmt.Errorf("error fetching description: %v", err)
 	}
 
-	// Filter descriptions in English
-	var englishDescriptions []string
-	for _, desc := range speciesData.FormDescriptions {
-		if desc.Language.Name == "en" {
-			englishDescriptions = append(englishDescriptions, desc.Description)
+	// Get the Pokémon's genus (e.g., "Mouse Pokémon")
+	var genus string
+	for _, genusEntry := range speciesData.Genera {
+		if genusEntry.Language.Name == "en" {
+			genus = genusEntry.Genus
+			break
 		}
 	}
 
-	// If no form descriptions are available, just show the genus
-	if len(englishDescriptions) == 0 {
-		// Get genus information as a fallback
-		genus := "Pokémon" // Default
-		for _, genusEntry := range speciesData.Genera {
-			if genusEntry.Language.Name == "en" {
-				genus = genusEntry.Genus
-				break
+	// Get flavor text entries in English
+	var englishFlavorTexts []struct {
+		text    string
+		version string
+	}
+
+	for _, entry := range speciesData.FlavorTextEntries {
+		if entry.Language.Name == "en" {
+			cleanText := cleanText(entry.FlavorText)
+			if cleanText != "" {
+				englishFlavorTexts = append(englishFlavorTexts, struct {
+					text    string
+					version string
+				}{
+					text:    cleanText,
+					version: entry.Version.Name,
+				})
 			}
 		}
-
-		fmt.Printf("%s is a %s.\n", capitalizeFirstLetter(pokemonName), genus)
-		return nil
 	}
 
-	// Get a random description if multiple are available
-	var selectedDescription string
-	if len(englishDescriptions) > 1 {
-		randomIndex := rand.Intn(len(englishDescriptions))
-		selectedDescription = englishDescriptions[randomIndex]
+	// Display the Pokémon info
+	capitalizedName := cases.Title(language.English).String(strings.ToLower(pokemonName))
+	fmt.Println("-----")
+	if genus != "" {
+		fmt.Printf("%s, the %s\n", capitalizedName, genus)
 	} else {
-		selectedDescription = englishDescriptions[0]
+		fmt.Printf("%s\n", capitalizedName)
 	}
 
-	// Print the description
-	fmt.Printf("%s: %s\n", capitalizeFirstLetter(pokemonName), selectedDescription)
+	// Display a random flavor text if available
+	if len(englishFlavorTexts) > 0 {
+		// Select a random flavor text
+		selectedEntry := englishFlavorTexts[rand.Intn(len(englishFlavorTexts))]
+
+		// Format the game name to look nicer
+		gameName := strings.ReplaceAll(selectedEntry.version, "-", " ")
+		gameName = cases.Title(language.English).String(strings.ToLower(gameName))
+
+		// Display the flavor text with the requested format
+		fmt.Printf("\"%s\"\n", selectedEntry.text)
+		fmt.Printf("(From Pokémon %s)\n", gameName)
+		fmt.Println("-----")
+	} else {
+		fmt.Println("- No description available.")
+	}
 
 	return nil
+}
+
+// cleanText removes unwanted characters and normalizes spaces in text.
+func cleanText(text string) string {
+	// Replace line breaks and form feeds with spaces
+	text = strings.ReplaceAll(text, "\n", " ")
+	text = strings.ReplaceAll(text, "\f", " ")
+
+	// Replace any sequence of spaces with a single space
+	text = strings.Join(strings.Fields(text), " ")
+
+	return text
 }

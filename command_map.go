@@ -1,74 +1,102 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 )
 
-// commandMap handles the 'map' command, showing the next page of location areas.
-// This command is used to navigate forward through the paginated list of Pokémon
-// locations in the game world. It fetches location data from the PokeAPI
-// and updates the pagination URLs for navigation.
+// commandMap navigates to the next page of Pokémon location areas.
+// It's also available under the 'next' command for more intuitive navigation.
 //
-// If this is the first time the command is run, it will fetch the first page.
-// Subsequent calls will fetch the next page in the sequence if available.
+// The function retrieves a list of location areas from the PokeAPI,
+// displaying up to 20 locations at once. It also updates the pagination
+// URLs for subsequent navigation.
 //
 // Parameters:
-//   - cfg: The application configuration containing the API client and pagination URLs
-//   - params: Command parameters (not used for this command)
+//   - cfg: The application configuration containing the pagination URLs
+//   - params: Command parameters (unused)
 //
 // Returns:
-//   - An error if the API request fails
+//   - An error if there's an issue with the API request or if there are no more pages
 func commandMap(cfg *config, params []string) error {
-	// Get the next page of location areas (or first page if nextLocationURL is nil)
-	resp, err := cfg.pokeapiClient.ListLocationAreas(cfg.nextLocationURL)
+	// Get the URL to use - either the next page URL or the base URL
+	var locationsResp, err = cfg.pokeapiClient.ListLocationAreas(nil)
 	if err != nil {
 		return err
 	}
 
-	// Print all locations from the response
-	fmt.Println("Location areas:")
-	for _, area := range resp.Results {
-		fmt.Printf(" - %s \n", area.Name)
+	// Update pagination URLs
+	cfg.nextLocationURL = locationsResp.Next
+	cfg.prevLocationURL = locationsResp.Previous
+
+	// Display the location areas
+	for i, loc := range locationsResp.Results {
+		fmt.Printf("%d. %s\n", i+1, loc.Name)
 	}
 
-	// Update the pagination URLs in the config
-	cfg.nextLocationURL = resp.Next
-	cfg.prevLocationURL = resp.Previous
 	return nil
 }
 
-// commandMapb handles the 'mapb' command, showing the previous page of location areas.
-// This command complements the 'map' command by enabling backward navigation through
-// the paginated list of Pokémon locations. It fetches the previous page of location data
-// and updates the pagination URLs accordingly.
+// commandNext navigates to the next page of Pokémon location areas.
+// This is the primary implementation for both 'next' and 'map' commands.
+//
+// The function retrieves a list of location areas from the PokeAPI,
+// displaying up to 20 locations at once. It also updates the pagination
+// URLs for subsequent navigation.
 //
 // Parameters:
-//   - cfg: The application configuration containing the API client and pagination URLs
-//   - params: Command parameters (not used for this command)
+//   - cfg: The application configuration containing the pagination URLs
+//   - params: Command parameters (unused)
 //
 // Returns:
-//   - An error if on the first page (no previous data) or if the API request fails
-func commandMapb(cfg *config, params []string) error {
-	// Check if we can go back to the previous page
-	if cfg.prevLocationURL == nil {
-		return errors.New("you are on the first response - no previous data available")
-	}
-
-	// Get the previous page of location areas
-	resp, err := cfg.pokeapiClient.ListLocationAreas(cfg.prevLocationURL)
+//   - An error if there's an issue with the API request or if there are no more pages
+func commandNext(cfg *config, params []string) error {
+	// Get the URL to use - either the next page URL or the base URL
+	var locationsResp, err = cfg.pokeapiClient.ListLocationAreas(cfg.nextLocationURL)
 	if err != nil {
 		return err
 	}
 
-	// Print all locations from the response
-	fmt.Println("Location areas:")
-	for _, area := range resp.Results {
-		fmt.Printf(" - %s \n", area.Name)
+	// Update pagination URLs
+	cfg.nextLocationURL = locationsResp.Next
+	cfg.prevLocationURL = locationsResp.Previous
+
+	// Display the location areas
+	for i, loc := range locationsResp.Results {
+		fmt.Printf("%d. %s\n", i+1, loc.Name)
 	}
 
-	// Update the pagination URLs in the config
-	cfg.nextLocationURL = resp.Next
-	cfg.prevLocationURL = resp.Previous
+	return nil
+}
+
+// commandPrev navigates to the previous page of Pokémon location areas.
+// This is the primary implementation for both 'prev' and 'mapb' commands.
+//
+// Parameters:
+//   - cfg: The application configuration containing the pagination URLs
+//   - params: Command parameters (unused)
+//
+// Returns:
+//   - An error if there's an issue with the API request or if there are no previous pages
+func commandPrev(cfg *config, params []string) error {
+	// Check if there is a previous page
+	if cfg.prevLocationURL == nil {
+		return fmt.Errorf("you're already at the first page")
+	}
+
+	// Get the previous page
+	locationsResp, err := cfg.pokeapiClient.ListLocationAreas(cfg.prevLocationURL)
+	if err != nil {
+		return err
+	}
+
+	// Update pagination URLs
+	cfg.nextLocationURL = locationsResp.Next
+	cfg.prevLocationURL = locationsResp.Previous
+
+	// Display the location areas
+	for i, loc := range locationsResp.Results {
+		fmt.Printf("%d. %s\n", i+1, loc.Name)
+	}
+
 	return nil
 }
