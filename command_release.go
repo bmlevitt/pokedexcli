@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -16,32 +15,25 @@ import (
 // Returns:
 //   - An error if no Pokémon name is provided or if the Pokémon is not in the Pokédex
 func commandRelease(cfg *config, params []string) error {
-	// Check for pokemon name parameter
-	if len(params) == 0 {
-		return errors.New("no pokemon name provided")
+	// Use the utility function to validate the Pokemon parameter and check if it exists
+	apiName, nameInfo, _, _, err := GetPokemonIfExists(cfg, params)
+	if err != nil {
+		return err
 	}
 
-	// Process the Pokémon name and check if it exists
-	apiName, exists, _ := CheckPokemonExists(cfg, params[0])
-	nameInfo := FormatPokemonInput(apiName)
+	// Lock the config before modifying the pokedex
+	cfg.mutex.Lock()
+	// Remove the pokemon from the pokedex
+	delete(cfg.pokedex, apiName)
+	cfg.mutex.Unlock()
 
-	if exists {
-		// Lock the config before modifying the pokedex
-		cfg.mutex.Lock()
-		// Remove the pokemon from the pokedex
-		delete(cfg.pokedex, apiName)
-		cfg.mutex.Unlock()
+	fmt.Printf("%s was released. Bye, %s!\n", nameInfo.Formatted, nameInfo.Formatted)
+	fmt.Println("-----")
 
-		fmt.Printf("%s was released. Bye, %s!\n", nameInfo.Formatted, nameInfo.Formatted)
-		fmt.Println("-----")
-
-		// Auto-save after releasing a Pokémon
-		if err := UpdatePokedexAndSave(cfg); err != nil {
-			return err
-		}
-
-		return nil
+	// Auto-save after releasing a Pokémon
+	if err := UpdatePokedexAndSave(cfg); err != nil {
+		return err
 	}
 
-	return HandlePokemonNotFound(nameInfo.APIFormat)
+	return nil
 }

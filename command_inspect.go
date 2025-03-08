@@ -1,10 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-
-	"github.com/bmlevitt/pokedexcli/internal/pokeapi"
 )
 
 // commandInspect displays detailed information about a Pokémon in the user's Pokédex.
@@ -21,40 +18,35 @@ import (
 //   - params: Command parameters where params[0] is the Pokémon name to inspect
 //
 // Returns:
-//   - An error if no Pokémon name is provided
+//   - An error if no Pokémon name is provided or if the Pokémon is not in the Pokédex
 func commandInspect(cfg *config, params []string) error {
-	// Check for pokemon name parameter
-	if len(params) == 0 {
-		return errors.New("no pokemon name provided")
+	// Use the utility function to validate the Pokemon parameter and check if it exists
+	_, nameInfo, pokemonData, _, err := GetPokemonIfExists(cfg, params)
+	if err != nil {
+		return err
 	}
 
-	// Process the Pokémon name and check if it exists
-	apiName, exists, pokemonData := CheckPokemonExists(cfg, params[0])
-	nameInfo := FormatPokemonInput(apiName)
-
-	if exists {
-		data, ok := pokemonData.(pokeapi.PokemonDataResp)
-		if !ok {
-			return fmt.Errorf("unexpected data type for %s", nameInfo.Formatted)
-		}
-
-		fmt.Printf("Name: %s\n", nameInfo.Formatted)
-		fmt.Printf("Height: %v\n", data.Height)
-		fmt.Printf("Weight: %v\n", data.Weight)
-		fmt.Printf("Stats:\n")
-		for _, stat := range data.Stats {
-			formattedStat := FormatStatName(stat.Stat.Name)
-			fmt.Printf(" - %s: %v\n", formattedStat, stat.BaseStat)
-		}
-		fmt.Printf("Types:\n")
-		for _, typ := range data.Types {
-			formattedType := FormatTypeName(typ.Type.Name)
-			fmt.Printf(" - %s\n", formattedType)
-		}
-		fmt.Println("-----")
-	} else {
-		return HandlePokemonNotFound(nameInfo.APIFormat)
+	// The Pokemon exists, so convert to the typed data structure
+	data, err := GetTypedPokemonData(pokemonData, nameInfo.Formatted)
+	if err != nil {
+		return err
 	}
+
+	// Display Pokemon information
+	fmt.Printf("Name: %s\n", nameInfo.Formatted)
+	fmt.Printf("Height: %v\n", data.Height)
+	fmt.Printf("Weight: %v\n", data.Weight)
+	fmt.Printf("Stats:\n")
+	for _, stat := range data.Stats {
+		formattedStat := FormatStatName(stat.Stat.Name)
+		fmt.Printf(" - %s: %v\n", formattedStat, stat.BaseStat)
+	}
+	fmt.Printf("Types:\n")
+	for _, typ := range data.Types {
+		formattedType := FormatTypeName(typ.Type.Name)
+		fmt.Printf(" - %s\n", formattedType)
+	}
+	fmt.Println("-----")
 
 	return nil
 }

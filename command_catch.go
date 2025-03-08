@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 )
@@ -21,13 +20,14 @@ import (
 // Returns:
 //   - An error if no Pokémon name is provided or if there's an issue with the API request
 func commandCatch(cfg *config, params []string) error {
-	// Check for pokemon name parameter
-	if len(params) == 0 {
-		return errors.New("no pokemon name provided")
+	// Validate the Pokemon parameter
+	pokemonName, err := ValidatePokemonParam(params)
+	if err != nil {
+		return err
 	}
 
 	// Process the Pokémon name input
-	nameInfo := FormatPokemonInput(params[0])
+	nameInfo := FormatPokemonInput(pokemonName)
 
 	// Fetch pokemon capture rate
 	resp, err := cfg.pokeapiClient.GetPokemonCaptureRate(nameInfo.APIFormat)

@@ -87,7 +87,7 @@ func getCommands() map[string]cliCommand {
 		},
 		"map": {
 			name:        "map",
-			description: "Navigates to the first page of locations",
+			description: "Navigate to the first page of locations",
 			callback:    commandMap,
 		},
 		"next": {

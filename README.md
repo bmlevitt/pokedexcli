@@ -46,7 +46,7 @@ A feature-rich, interactive Pokémon encyclopedia right in your terminal! Pokéd
 After starting the application, you'll be presented with a command prompt. Here's a list of available commands:
 
 - `help`: Display a list of all available commands
-- `map`: Explore the first page of map locations
+- `map`: Navigate to the first page of map locations
 - `next`: Navigate to the next page of map locations
 - `prev`: Navigate to the previous page of map locations
 - `explore [location number]`: List Pokémon that can be found at a specific location

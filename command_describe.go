@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -22,17 +21,10 @@ import (
 //   - An error if no Pokémon name is provided, if the Pokémon is not in the Pokédex,
 //     or if there's an issue with the API request
 func commandDescribe(cfg *config, params []string) error {
-	// Check for pokemon name parameter
-	if len(params) == 0 {
-		return errors.New("no pokemon name provided")
-	}
-
-	// Process the Pokémon name and check if it exists
-	apiName, exists, _ := CheckPokemonExists(cfg, params[0])
-	nameInfo := FormatPokemonInput(apiName)
-
-	if !exists {
-		return HandlePokemonNotFound(nameInfo.APIFormat)
+	// Use the utility function to validate the Pokemon parameter and check if it exists
+	apiName, nameInfo, _, _, err := GetPokemonIfExists(cfg, params)
+	if err != nil {
+		return err
 	}
 
 	// Fetch species data for the pokemon

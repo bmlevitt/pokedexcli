@@ -6,6 +6,22 @@ import (
 	"strconv"
 )
 
+// ValidateLocationParam checks if a location number parameter was provided
+// and returns the value if it was, or an error if it wasn't.
+//
+// Parameters:
+//   - params: Command parameters where params[0] should be the location number
+//
+// Returns:
+//   - The location number parameter if provided
+//   - An error if no location number is provided
+func ValidateLocationParam(params []string) (string, error) {
+	if len(params) == 0 {
+		return "", ErrNoLocationNumber
+	}
+	return params[0], nil
+}
+
 // commandExplore retrieves and displays Pokémon that can be found at a specific location.
 // This command is a key part of the exploration gameplay, allowing users to discover
 // which Pokémon they might encounter at a given location area before attempting to catch them.
@@ -21,12 +37,14 @@ import (
 //   - An error if no location number is provided, if the number is invalid,
 //     if the number is out of range, or if the API request fails
 func commandExplore(cfg *config, params []string) error {
-	if len(params) == 0 {
-		return errors.New("no location number provided")
+	// Validate the location parameter
+	locNumStr, err := ValidateLocationParam(params)
+	if err != nil {
+		return err
 	}
 
 	// Parse the location number from input
-	locationNumber, err := strconv.Atoi(params[0])
+	locationNumber, err := strconv.Atoi(locNumStr)
 	if err != nil {
 		return errors.New("invalid location number: please provide a number between 1-20")
 	}

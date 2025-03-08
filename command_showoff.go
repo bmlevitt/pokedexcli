@@ -1,11 +1,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
-
-	"github.com/bmlevitt/pokedexcli/internal/pokeapi"
 )
 
 // commandShowOff displays a Pokémon from the user's Pokédex performing a random move.
@@ -24,23 +21,16 @@ import (
 //   - An error if no Pokémon name is provided, if the Pokémon is not in the Pokédex,
 //     or if the Pokémon doesn't know any moves
 func commandShowOff(cfg *config, params []string) error {
-	// Check for pokemon name parameter
-	if len(params) == 0 {
-		return errors.New("no pokemon name provided")
+	// Use the utility function to validate the Pokemon parameter and check if it exists
+	_, nameInfo, pokemonData, _, err := GetPokemonIfExists(cfg, params)
+	if err != nil {
+		return err
 	}
 
-	// Process the Pokémon name and check if it exists
-	apiName, exists, pokemonData := CheckPokemonExists(cfg, params[0])
-	nameInfo := FormatPokemonInput(apiName)
-
-	if !exists {
-		return HandlePokemonNotFound(nameInfo.APIFormat)
-	}
-
-	// Type assertion for the pokemon data
-	pokemon, ok := pokemonData.(pokeapi.PokemonDataResp)
-	if !ok {
-		return fmt.Errorf("unexpected data type for %s", nameInfo.Formatted)
+	// The Pokemon exists, so convert to the typed data structure
+	pokemon, err := GetTypedPokemonData(pokemonData, nameInfo.Formatted)
+	if err != nil {
+		return err
 	}
 
 	// Check if the pokemon has any moves
