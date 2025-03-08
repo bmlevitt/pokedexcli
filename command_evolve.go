@@ -117,6 +117,15 @@ func commandEvolve(cfg *config, params []string) error {
 		capitalizeFirstLetter(pokemonName),
 		capitalizeFirstLetter(chosenEvolution))
 
+	// Auto-save after evolving a Pokémon
+	cfg.changesSinceSync++
+	if cfg.changesSinceSync >= cfg.autoSaveInterval {
+		if err := autoSaveIfEnabled(cfg); err != nil {
+			return fmt.Errorf("error auto-saving: %w", err)
+		}
+		cfg.changesSinceSync = 0
+	}
+
 	return nil
 }
 

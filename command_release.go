@@ -5,10 +5,9 @@ import (
 	"fmt"
 )
 
-// commandRelease removes a Pokémon from the user's Pokédex.
-// This command allows the user to release a caught Pokémon back into the wild,
-// removing it from their collection. This action cannot be undone - to get the
-// Pokémon back, the user would need to catch it again.
+// commandRelease releases a Pokémon from the user's Pokédex.
+// This is the opposite of catching a Pokémon - it removes the specified
+// Pokémon from the user's collection.
 //
 // Parameters:
 //   - cfg: The application configuration containing the Pokédex
@@ -31,7 +30,16 @@ func commandRelease(cfg *config, params []string) error {
 
 	// Remove the pokemon from the pokedex
 	delete(cfg.pokedex, pokemonName)
-	fmt.Printf("%s was released back into the wild!\n", pokemonName)
+	fmt.Printf("%s was released. Bye, %s!\n", pokemonName, pokemonName)
+
+	// Auto-save after releasing a Pokémon
+	cfg.changesSinceSync++
+	if cfg.changesSinceSync >= cfg.autoSaveInterval {
+		if err := autoSaveIfEnabled(cfg); err != nil {
+			return fmt.Errorf("error auto-saving: %w", err)
+		}
+		cfg.changesSinceSync = 0
+	}
 
 	return nil
 }

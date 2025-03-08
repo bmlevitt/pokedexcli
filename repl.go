@@ -80,6 +80,26 @@ func getCommands() map[string]cliCommand {
 			description: "Evolve a pokemon that is in your pokedex",
 			callback:    commandEvolve,
 		},
+		"save": {
+			name:        "save",
+			description: "Save your current Pokédex to a file",
+			callback:    commandSave,
+		},
+		"reset": {
+			name:        "reset",
+			description: "Clear your Pokédex and start fresh",
+			callback:    commandReset,
+		},
+		"autosave": {
+			name:        "autosave",
+			description: "Enable or disable automatic saving (on/off)",
+			callback:    commandAutoSave,
+		},
+		"saveinterval": {
+			name:        "saveinterval",
+			description: "Set how often to auto-save (number of changes)",
+			callback:    commandSaveInterval,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",

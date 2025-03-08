@@ -47,6 +47,14 @@ func commandCatch(cfg *config, params []string) error {
 		cfg.pokedex[pokemonName] = pokeData
 		fmt.Printf("%s was caught!\n", pokemonName)
 
+		// Auto-save after catching a Pokémon
+		cfg.changesSinceSync++
+		if cfg.changesSinceSync >= cfg.autoSaveInterval {
+			if err := autoSaveIfEnabled(cfg); err != nil {
+				return fmt.Errorf("error auto-saving: %w", err)
+			}
+			cfg.changesSinceSync = 0
+		}
 	} else {
 		fmt.Printf("%s escaped!\n", pokemonName)
 	}
