@@ -28,6 +28,10 @@ func FormatPokemonInput(input string) PokemonNameInfo {
 func CheckPokemonExists(cfg *config, pokemonName string) (string, bool, interface{}) {
 	nameInfo := FormatPokemonInput(pokemonName)
 
+	// Acquire a read lock before accessing the pokedex
+	cfg.mutex.RLock()
+	defer cfg.mutex.RUnlock()
+
 	// Check if the pokemon exists directly
 	pokemonData, exists := cfg.pokedex[nameInfo.APIFormat]
 	if exists {
@@ -52,12 +56,19 @@ func HandlePokemonNotFound(pokemonName string) error {
 
 // UpdatePokedexAndSave handles all the auto-save logic after a change to the Pokédex
 func UpdatePokedexAndSave(cfg *config) error {
+	// Lock the config before modifying the counter
+	cfg.mutex.Lock()
 	cfg.changesSinceSync++
-	if cfg.changesSinceSync >= cfg.autoSaveInterval {
+	shouldSave := cfg.changesSinceSync >= cfg.autoSaveInterval
+	if shouldSave {
+		cfg.changesSinceSync = 0
+	}
+	cfg.mutex.Unlock()
+
+	if shouldSave {
 		if err := autoSaveIfEnabled(cfg); err != nil {
 			return fmt.Errorf("error auto-saving: %w", err)
 		}
-		cfg.changesSinceSync = 0
 	}
 	return nil
 }

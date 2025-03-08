@@ -2,36 +2,39 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/bmlevitt/pokedexcli/internal/pokeapi"
 )
 
-// config holds the application state and configuration settings.
-// It maintains the API client, pagination URLs for location navigation,
-// the user's collection of caught Pokémon (the Pokédex), and auto-save settings.
+// config holds the application's global configuration and state.
+// It includes API clients, navigation state, and the user's Pokédex data.
 type config struct {
-	pokeapiClient    pokeapi.Client                     // Client for making Pokemon API requests
-	nextLocationURL  *string                            // URL for the next page of locations
-	prevLocationURL  *string                            // URL for the previous page of locations
-	pokedex          map[string]pokeapi.PokemonDataResp // Map of caught Pokemon indexed by name
-	autoSaveEnabled  bool                               // Whether to automatically save after changes
-	autoSaveInterval int                                // How many changes before auto-saving (if enabled)
-	changesSinceSync int                                // Counter for changes since last save
-	recentLocations  []pokeapi.NamedAPIResource         // Most recent list of locations displayed
+	pokeapiClient        pokeapi.Client                     // Client for making Pokemon API requests
+	nextLocationURL      *string                            // URL for the next page of locations
+	prevLocationURL      *string                            // URL for the previous page of locations
+	pokedex              map[string]pokeapi.PokemonDataResp // Map of caught Pokemon indexed by name
+	autoSaveEnabled      bool                               // Whether to automatically save after changes
+	autoSaveInterval     int                                // How many changes before auto-saving (if enabled)
+	changesSinceSync     int                                // Counter for changes since last save
+	recentLocations      []pokeapi.NamedAPIResource         // Most recent list of locations displayed
+	mapViewedThisSession bool                               // Whether the map command has been used in this session
+	mutex                sync.RWMutex                       // Mutex to protect access to shared data
 }
 
-// main initializes the application and starts the command-line interface.
+// main is the entry point for the Pokédex CLI application.
 // It creates a new API client with a 1-hour cache duration to reduce API calls,
 // initializes an empty Pokédex to store caught Pokémon, and loads any saved data.
 func main() {
 	// Initialize the configuration with a new Pokemon API client and default settings
 	cfg := config{
-		pokeapiClient:    pokeapi.NewClient(time.Hour),
-		pokedex:          make(map[string]pokeapi.PokemonDataResp),
-		autoSaveEnabled:  true, // Auto-save is enabled by default
-		autoSaveInterval: 1,    // Save after every change by default
-		changesSinceSync: 0,    // No changes yet
+		pokeapiClient:        pokeapi.NewClient(time.Hour),
+		pokedex:              make(map[string]pokeapi.PokemonDataResp),
+		autoSaveEnabled:      true,  // Auto-save is enabled by default
+		autoSaveInterval:     1,     // Save after every change by default
+		changesSinceSync:     0,     // No changes yet
+		mapViewedThisSession: false, // Map hasn't been viewed in this session yet
 	}
 
 	// Try to load saved data

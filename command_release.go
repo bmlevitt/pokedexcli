@@ -26,8 +26,12 @@ func commandRelease(cfg *config, params []string) error {
 	nameInfo := FormatPokemonInput(apiName)
 
 	if exists {
+		// Lock the config before modifying the pokedex
+		cfg.mutex.Lock()
 		// Remove the pokemon from the pokedex
 		delete(cfg.pokedex, apiName)
+		cfg.mutex.Unlock()
+
 		fmt.Printf("%s was released. Bye, %s!\n", nameInfo.Formatted, nameInfo.Formatted)
 		fmt.Println("-----")
 

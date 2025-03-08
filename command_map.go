@@ -19,18 +19,22 @@ import (
 // Returns:
 //   - An error if there's an issue with the API request or if there are no more pages
 func commandMap(cfg *config, params []string) error {
-	// Get the URL to use - either the next page URL or the base URL
+	// Get the URL to use - always use the base URL (nil) for the initial map command
 	var locationsResp, err = cfg.pokeapiClient.ListLocationAreas(nil)
 	if err != nil {
 		return err
 	}
 
+	// Update shared state with a lock
+	cfg.mutex.Lock()
 	// Update pagination URLs
 	cfg.nextLocationURL = locationsResp.Next
 	cfg.prevLocationURL = locationsResp.Previous
-
 	// Store the location results for reference by other commands
 	cfg.recentLocations = locationsResp.Results
+	// Mark that the map has been viewed in this session
+	cfg.mapViewedThisSession = true
+	cfg.mutex.Unlock()
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
@@ -56,8 +60,14 @@ func commandMap(cfg *config, params []string) error {
 // Returns:
 //   - An error if there's an issue with the API request or if there are no more pages
 func commandNext(cfg *config, params []string) error {
+	// Check if map has been viewed in this session
+	if !cfg.mapViewedThisSession {
+		return errors.New("you need to use the 'map' command first to load locations")
+	}
+
+	// Check if there's a next page URL
 	if cfg.nextLocationURL == nil {
-		return errors.New("no more pages available")
+		return errors.New("you're on the last page")
 	}
 
 	// Get the next page of locations
@@ -66,12 +76,14 @@ func commandNext(cfg *config, params []string) error {
 		return err
 	}
 
+	// Update shared state with a lock
+	cfg.mutex.Lock()
 	// Update pagination URLs
 	cfg.nextLocationURL = locationsResp.Next
 	cfg.prevLocationURL = locationsResp.Previous
-
 	// Store the location results for reference by other commands
 	cfg.recentLocations = locationsResp.Results
+	cfg.mutex.Unlock()
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
@@ -93,8 +105,14 @@ func commandNext(cfg *config, params []string) error {
 // Returns:
 //   - An error if there's an issue with the API request or if there are no previous pages
 func commandPrev(cfg *config, params []string) error {
+	// Check if map has been viewed in this session
+	if !cfg.mapViewedThisSession {
+		return errors.New("you need to use the 'map' command first to load locations")
+	}
+
+	// Check if there's a previous page URL
 	if cfg.prevLocationURL == nil {
-		return errors.New("already at the first page")
+		return errors.New("you're on the first page")
 	}
 
 	// Get the previous page of locations
@@ -103,12 +121,14 @@ func commandPrev(cfg *config, params []string) error {
 		return err
 	}
 
+	// Update shared state with a lock
+	cfg.mutex.Lock()
 	// Update pagination URLs
 	cfg.nextLocationURL = locationsResp.Next
 	cfg.prevLocationURL = locationsResp.Previous
-
 	// Store the location results for reference by other commands
 	cfg.recentLocations = locationsResp.Results
+	cfg.mutex.Unlock()
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {

@@ -44,7 +44,12 @@ func commandCatch(cfg *config, params []string) error {
 		if err != nil {
 			return err
 		}
+
+		// Lock the config before modifying the pokedex
+		cfg.mutex.Lock()
 		cfg.pokedex[nameInfo.APIFormat] = pokeData
+		cfg.mutex.Unlock()
+
 		fmt.Printf("%s was caught!\n", nameInfo.Formatted)
 
 		// Auto-save after catching a Pokémon

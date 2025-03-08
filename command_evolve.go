@@ -111,11 +111,15 @@ func commandEvolve(cfg *config, params []string) error {
 		return fmt.Errorf("error fetching evolved Pokémon data: %v", err)
 	}
 
+	// Lock the config before modifying the pokedex
+	cfg.mutex.Lock()
+
 	// Remove the original Pokemon from the pokedex
 	delete(cfg.pokedex, apiName)
 
 	// Add the evolved Pokemon to the pokedex
 	cfg.pokedex[chosenEvolution] = evolvedPokemonData
+	cfg.mutex.Unlock()
 
 	fmt.Printf("Congratulations! Your %s evolved into %s!\n",
 		nameInfo.Formatted,
