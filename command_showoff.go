@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+
+	"github.com/bmlevitt/pokedexcli/internal/pokeapi"
 )
 
 // commandShowOff displays a Pokémon from the user's Pokédex performing a random move.
@@ -26,45 +28,35 @@ func commandShowOff(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	inputName := params[0]
 
-	// Convert the input name to API format if it's in a formatted style
-	apiPokemonName := ConvertToAPIFormat(inputName)
-	formattedName := FormatPokemonName(apiPokemonName)
+	// Process the Pokémon name and check if it exists
+	apiName, exists, pokemonData := CheckPokemonExists(cfg, params[0])
+	nameInfo := FormatPokemonInput(apiName)
 
-	// Check if the pokemon exists in the pokedex
-	pokemon, exists := cfg.pokedex[apiPokemonName]
 	if !exists {
-		// Check if it's a capitalization issue by trying all keys
-		found := false
-		for key := range cfg.pokedex {
-			if ConvertToAPIFormat(key) == apiPokemonName {
-				apiPokemonName = key
-				pokemon = cfg.pokedex[key]
-				found = true
-				break
-			}
-		}
+		return HandlePokemonNotFound(nameInfo.APIFormat)
+	}
 
-		if !found {
-			return fmt.Errorf("%s is not in your Pokédex", formattedName)
-		}
+	// Type assertion for the pokemon data
+	pokemon, ok := pokemonData.(pokeapi.PokemonDataResp)
+	if !ok {
+		return fmt.Errorf("unexpected data type for %s", nameInfo.Formatted)
 	}
 
 	// Check if the pokemon has any moves
 	if len(pokemon.Moves) == 0 {
-		return fmt.Errorf("%s doesn't know any moves", formattedName)
+		return fmt.Errorf("%s doesn't know any moves", nameInfo.Formatted)
 	}
 
 	// Select a random move
 	randomIndex := rand.Intn(len(pokemon.Moves))
 	moveName := pokemon.Moves[randomIndex].Move.Name
 
-	// Format the move name for better display (replace hyphens with spaces and capitalize words)
+	// Format the move name for better display
 	formattedMove := FormatMoveName(moveName)
 
 	// Show off the pokemon using the move
-	fmt.Printf("%s used %s!\n", formattedName, formattedMove)
+	fmt.Printf("%s used %s!\n", nameInfo.Formatted, formattedMove)
 	fmt.Println("-----")
 
 	return nil

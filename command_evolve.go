@@ -31,45 +31,30 @@ func commandEvolve(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	inputName := params[0]
 
-	// Convert the input name to API format if it's in a formatted style
-	apiPokemonName := ConvertToAPIFormat(inputName)
-	formattedName := FormatPokemonName(apiPokemonName)
+	// Process the Pokémon name and check if it exists
+	apiName, exists, _ := CheckPokemonExists(cfg, params[0])
+	nameInfo := FormatPokemonInput(apiName)
 
-	// Check if the pokemon exists in the pokedex
-	_, exists := cfg.pokedex[apiPokemonName]
 	if !exists {
-		// Check if it's a capitalization issue by trying all keys
-		found := false
-		for key := range cfg.pokedex {
-			if ConvertToAPIFormat(key) == apiPokemonName {
-				apiPokemonName = key
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return fmt.Errorf("%s is not in your Pokédex", formattedName)
-		}
+		return HandlePokemonNotFound(nameInfo.APIFormat)
 	}
 
 	// Get the evolution chain for the Pokemon
-	evolutionChain, err := cfg.pokeapiClient.GetEvolutionChainBySpecies(apiPokemonName)
+	evolutionChain, err := cfg.pokeapiClient.GetEvolutionChainBySpecies(apiName)
 	if err != nil {
 		return fmt.Errorf("error getting evolution data: %v", err)
 	}
 
 	// Find the Pokemon in the evolution chain and its possible evolutions
-	evolutions, err := findEvolutionsFor(apiPokemonName, evolutionChain.Chain)
+	evolutions, err := findEvolutionsFor(apiName, evolutionChain.Chain)
 	if err != nil {
 		return err
 	}
 
 	// Check if the Pokemon can evolve
 	if len(evolutions) == 0 {
-		return fmt.Errorf("%s cannot evolve any further", formattedName)
+		return fmt.Errorf("%s cannot evolve any further", nameInfo.Formatted)
 	}
 
 	// Handle multiple evolution options
@@ -79,7 +64,7 @@ func commandEvolve(cfg *config, params []string) error {
 		chosenEvolution = evolutions[0].Species.Name
 	} else {
 		// Multiple evolution options - let user choose
-		fmt.Printf("%s can evolve into multiple forms:\n", formattedName)
+		fmt.Printf("%s can evolve into multiple forms:\n", nameInfo.Formatted)
 		for i, evolution := range evolutions {
 			formattedEvolution := FormatPokemonName(evolution.Species.Name)
 			fmt.Printf(" %d. %s\n", i+1, formattedEvolution)
@@ -117,8 +102,8 @@ func commandEvolve(cfg *config, params []string) error {
 	}
 
 	// Evolve the Pokemon
-	formattedEvolution := FormatPokemonName(chosenEvolution)
-	fmt.Printf("Evolving %s into %s...\n", formattedName, formattedEvolution)
+	evolvedNameInfo := FormatPokemonInput(chosenEvolution)
+	fmt.Printf("Evolving %s into %s...\n", nameInfo.Formatted, evolvedNameInfo.Formatted)
 
 	// Get the evolution's data
 	evolvedPokemonData, err := cfg.pokeapiClient.GetPokemonData(chosenEvolution)
@@ -127,23 +112,19 @@ func commandEvolve(cfg *config, params []string) error {
 	}
 
 	// Remove the original Pokemon from the pokedex
-	delete(cfg.pokedex, apiPokemonName)
+	delete(cfg.pokedex, apiName)
 
 	// Add the evolved Pokemon to the pokedex
 	cfg.pokedex[chosenEvolution] = evolvedPokemonData
 
 	fmt.Printf("Congratulations! Your %s evolved into %s!\n",
-		formattedName,
-		formattedEvolution)
+		nameInfo.Formatted,
+		evolvedNameInfo.Formatted)
 	fmt.Println("-----")
 
 	// Auto-save after evolving a Pokémon
-	cfg.changesSinceSync++
-	if cfg.changesSinceSync >= cfg.autoSaveInterval {
-		if err := autoSaveIfEnabled(cfg); err != nil {
-			return fmt.Errorf("error auto-saving: %w", err)
-		}
-		cfg.changesSinceSync = 0
+	if err := UpdatePokedexAndSave(cfg); err != nil {
+		return err
 	}
 
 	return nil

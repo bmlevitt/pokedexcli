@@ -21,45 +21,38 @@ import (
 // Returns:
 //   - An error if no Pokémon name is provided or if there's an issue with the API request
 func commandCatch(cfg *config, params []string) error {
-
 	// Check for pokemon name parameter
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	inputName := params[0]
 
-	// Convert the input name to API format if it's in a formatted style
-	apiPokemonName := ConvertToAPIFormat(inputName)
-	formattedName := FormatPokemonName(apiPokemonName)
+	// Process the Pokémon name input
+	nameInfo := FormatPokemonInput(params[0])
 
 	// Fetch pokemon capture rate
-	resp, err := cfg.pokeapiClient.GetPokemonCaptureRate(apiPokemonName)
+	resp, err := cfg.pokeapiClient.GetPokemonCaptureRate(nameInfo.APIFormat)
 	if err != nil {
 		return err
 	}
 
 	captureRate := resp.CaptureRate
-	fmt.Printf("Throwing a Pokéball at %s...\n", formattedName)
+	fmt.Printf("Throwing a Pokéball at %s...\n", nameInfo.Formatted)
 	randNum := rand.Intn(256)
 	caught := randNum < captureRate
 	if caught {
-		pokeData, err := cfg.pokeapiClient.GetPokemonData(apiPokemonName)
+		pokeData, err := cfg.pokeapiClient.GetPokemonData(nameInfo.APIFormat)
 		if err != nil {
 			return err
 		}
-		cfg.pokedex[apiPokemonName] = pokeData
-		fmt.Printf("%s was caught!\n", formattedName)
+		cfg.pokedex[nameInfo.APIFormat] = pokeData
+		fmt.Printf("%s was caught!\n", nameInfo.Formatted)
 
 		// Auto-save after catching a Pokémon
-		cfg.changesSinceSync++
-		if cfg.changesSinceSync >= cfg.autoSaveInterval {
-			if err := autoSaveIfEnabled(cfg); err != nil {
-				return fmt.Errorf("error auto-saving: %w", err)
-			}
-			cfg.changesSinceSync = 0
+		if err := UpdatePokedexAndSave(cfg); err != nil {
+			return err
 		}
 	} else {
-		fmt.Printf("%s escaped!\n", formattedName)
+		fmt.Printf("%s escaped!\n", nameInfo.Formatted)
 	}
 	fmt.Println("-----")
 	return nil

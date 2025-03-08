@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-// commandRelease releases a Pokémon from the user's Pokédex.
-// This is the opposite of catching a Pokémon - it removes the specified
-// Pokémon from the user's collection.
+// commandRelease removes a Pokémon from the user's Pokédex.
+// This command simulates releasing a caught Pokémon back into the wild,
+// removing it from the user's collection.
 //
 // Parameters:
 //   - cfg: The application configuration containing the Pokédex
@@ -20,49 +20,24 @@ func commandRelease(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	inputName := params[0]
 
-	// Convert the input name to API format if it's in a formatted style
-	apiPokemonName := ConvertToAPIFormat(inputName)
-	formattedName := FormatPokemonName(apiPokemonName)
+	// Process the Pokémon name and check if it exists
+	apiName, exists, _ := CheckPokemonExists(cfg, params[0])
+	nameInfo := FormatPokemonInput(apiName)
 
-	// First check for exact match
-	_, exists := cfg.pokedex[apiPokemonName]
 	if exists {
 		// Remove the pokemon from the pokedex
-		delete(cfg.pokedex, apiPokemonName)
-		fmt.Printf("%s was released. Bye, %s!\n", formattedName, formattedName)
+		delete(cfg.pokedex, apiName)
+		fmt.Printf("%s was released. Bye, %s!\n", nameInfo.Formatted, nameInfo.Formatted)
 		fmt.Println("-----")
-	} else {
-		// Check if it's a capitalization issue by trying all keys
-		found := false
-		var matchedKey string
-		for key := range cfg.pokedex {
-			if ConvertToAPIFormat(key) == apiPokemonName {
-				matchedKey = key
-				found = true
-				break
-			}
+
+		// Auto-save after releasing a Pokémon
+		if err := UpdatePokedexAndSave(cfg); err != nil {
+			return err
 		}
 
-		if found {
-			// Remove the pokemon from the pokedex
-			delete(cfg.pokedex, matchedKey)
-			fmt.Printf("%s was released. Bye, %s!\n", formattedName, formattedName)
-			fmt.Println("-----")
-		} else {
-			return fmt.Errorf("%s is not in your Pokédex", formattedName)
-		}
+		return nil
 	}
 
-	// Auto-save after releasing a Pokémon
-	cfg.changesSinceSync++
-	if cfg.changesSinceSync >= cfg.autoSaveInterval {
-		if err := autoSaveIfEnabled(cfg); err != nil {
-			return fmt.Errorf("error auto-saving: %w", err)
-		}
-		cfg.changesSinceSync = 0
-	}
-
-	return nil
+	return HandlePokemonNotFound(nameInfo.APIFormat)
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+
+	"github.com/bmlevitt/pokedexcli/internal/pokeapi"
 )
 
 // commandInspect displays detailed information about a Pokémon in the user's Pokédex.
@@ -25,15 +27,18 @@ func commandInspect(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	inputName := params[0]
 
-	// Convert the input name to API format if it's in a formatted style
-	apiPokemonName := ConvertToAPIFormat(inputName)
-	formattedName := FormatPokemonName(apiPokemonName)
+	// Process the Pokémon name and check if it exists
+	apiName, exists, pokemonData := CheckPokemonExists(cfg, params[0])
+	nameInfo := FormatPokemonInput(apiName)
 
-	data, exists := cfg.pokedex[apiPokemonName]
 	if exists {
-		fmt.Printf("Name: %s\n", formattedName)
+		data, ok := pokemonData.(pokeapi.PokemonDataResp)
+		if !ok {
+			return fmt.Errorf("unexpected data type for %s", nameInfo.Formatted)
+		}
+
+		fmt.Printf("Name: %s\n", nameInfo.Formatted)
 		fmt.Printf("Height: %v\n", data.Height)
 		fmt.Printf("Weight: %v\n", data.Weight)
 		fmt.Printf("Stats:\n")
@@ -47,36 +52,9 @@ func commandInspect(cfg *config, params []string) error {
 			fmt.Printf(" - %s\n", formattedType)
 		}
 		fmt.Println("-----")
-
 	} else {
-		// Check if it's a capitalization issue by trying all keys in lowercase
-		found := false
-		for key := range cfg.pokedex {
-			if ConvertToAPIFormat(key) == apiPokemonName {
-				data = cfg.pokedex[key]
-				found = true
-				break
-			}
-		}
-
-		if found {
-			fmt.Printf("Name: %s\n", formattedName)
-			fmt.Printf("Height: %v\n", data.Height)
-			fmt.Printf("Weight: %v\n", data.Weight)
-			fmt.Printf("Stats:\n")
-			for _, stat := range data.Stats {
-				formattedStat := FormatStatName(stat.Stat.Name)
-				fmt.Printf(" - %s: %v\n", formattedStat, stat.BaseStat)
-			}
-			fmt.Printf("Types:\n")
-			for _, typ := range data.Types {
-				formattedType := FormatTypeName(typ.Type.Name)
-				fmt.Printf(" - %s\n", formattedType)
-			}
-			fmt.Println("-----")
-		} else {
-			fmt.Printf("%s has not been caught yet\n", formattedName)
-		}
+		return HandlePokemonNotFound(nameInfo.APIFormat)
 	}
+
 	return nil
 }

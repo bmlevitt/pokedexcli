@@ -78,6 +78,7 @@ func commandNext(cfg *config, params []string) error {
 		formattedLocation := FormatLocationName(loc.Name)
 		fmt.Printf("%d. %s\n", i+1, formattedLocation)
 	}
+	fmt.Println("-----")
 
 	return nil
 }
@@ -114,6 +115,7 @@ func commandPrev(cfg *config, params []string) error {
 		formattedLocation := FormatLocationName(loc.Name)
 		fmt.Printf("%d. %s\n", i+1, formattedLocation)
 	}
+	fmt.Println("-----")
 
 	return nil
 }
