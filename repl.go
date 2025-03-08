@@ -72,6 +72,11 @@ func getCommands() map[string]cliCommand {
 			description: "Display form descriptions for a caught pokemon",
 			callback:    commandDescribe,
 		},
+		"evolve": {
+			name:        "evolve",
+			description: "Evolve a pokemon that is in your pokedex",
+			callback:    commandEvolve,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",

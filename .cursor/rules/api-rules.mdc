@@ -1,0 +1,16 @@
+---
+description: Rules to follow related to APIs
+globs: 
+alwaysApply: false
+---
+# API Design Guidelines for Data Extraction Workflows
+- Design Consistent Endpoints:Create endpoints that reliably receive and process incoming data—from any source—using standardized conventions (e.g., REST, GraphQL) to ensure a uniform and predictable interface.
+- Implement API Versioning: Incorporate versioning strategies to maintain backward compatibility as the format of incoming data and downstream API schemas evolve.
+- Return Appropriate HTTP Status Codes: Use proper HTTP status codes to clearly communicate the outcomes of data processing, including success, transient errors that may warrant retries, or failures.
+- Validate and Sanitize Inputs: Rigorously enforce input validation and sanitize data at the API boundary to maintain data integrity before applying any transformations.
+- Design for Data Processing: Clearly define each stage of the ETL workflow—from extraction through transformation to loading—including mapping, normalization, and enrichment processes to adequately prepare data for downstream use.
+- Implement Robust Error Handling and Retries: Detect and handle errors during data processing or outbound API calls, incorporating retry mechanisms to recover gracefully from transient issues.
+- Enforce Timeout Policies and Circuit Breakers: Set appropriate timeouts for external service calls and consider using circuit breaker patterns to avoid cascading failures and ensure overall system resilience.
+- Incorporate Security Measures: Authenticate and authorize incoming requests, secure data transmissions, and implement rate limiting to safeguard the integrity of the entire data extraction and processing pipeline.
+- Provide Detailed Logging and Monitoring: Monitor the complete ETL process—from receiving inbound data to processing transformations and making outbound calls—with comprehensive logging to facilitate debugging and performance analysis.
+- Offer Comprehensive Documentation: Document data payload structures, processing logic, and any integration specifics (e.g., using Swagger/OpenAPI) to aid in integration, onboarding, and long-term maintenance.
