@@ -1,20 +1,5 @@
 # Binary files
-main
-main.exe
 pokedexcli
-repl.log
 
-# Go specific
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary, built with 'go test -c'
-*.test
-
-# Output of the go coverage tool
-*.out 
-# Cursor
+# Cursor files
 .cursor/
