@@ -133,7 +133,23 @@ func FormatStatName(name string) string {
 // Returns:
 //   - A formatted Pokémon name with proper capitalization
 func FormatPokemonName(name string) string {
-	return CapitalizeFirstLetter(name)
+	if len(name) == 0 {
+		return name
+	}
+
+	// Split the name by hyphens
+	parts := strings.Split(name, "-")
+
+	// Capitalize first letter of first part
+	parts[0] = cases.Title(language.English).String(parts[0])
+
+	// Keep the rest of the parts lowercase
+	for i := 1; i < len(parts); i++ {
+		parts[i] = strings.ToLower(parts[i])
+	}
+
+	// Join the parts back with hyphens
+	return strings.Join(parts, "-")
 }
 
 // ConvertToAPIFormat converts a user-friendly formatted string (like "Mt Coronet 5F")
