@@ -65,7 +65,7 @@ func commandEvolve(cfg *config, params []string) error {
 		// Multiple evolution options - let user choose
 		fmt.Printf("%s can evolve into multiple forms:\n", pokemonName)
 		for i, evolution := range evolutions {
-			fmt.Printf(" %d. %s\n", i+1, capitalizeFirstLetter(evolution.Species.Name))
+			fmt.Printf(" %d. %s\n", i+1, CapitalizeFirstLetter(evolution.Species.Name))
 		}
 
 		// If additional parameters were provided, they might specify which evolution
@@ -99,7 +99,7 @@ func commandEvolve(cfg *config, params []string) error {
 	}
 
 	// Evolve the Pokemon
-	fmt.Printf("Evolving %s into %s...\n", pokemonName, capitalizeFirstLetter(chosenEvolution))
+	fmt.Printf("Evolving %s into %s...\n", pokemonName, CapitalizeFirstLetter(chosenEvolution))
 
 	// Get the evolution's data
 	evolvedPokemonData, err := cfg.pokeapiClient.GetPokemonData(chosenEvolution)
@@ -114,8 +114,8 @@ func commandEvolve(cfg *config, params []string) error {
 	cfg.pokedex[chosenEvolution] = evolvedPokemonData
 
 	fmt.Printf("Congratulations! Your %s evolved into %s!\n",
-		capitalizeFirstLetter(pokemonName),
-		capitalizeFirstLetter(chosenEvolution))
+		CapitalizeFirstLetter(pokemonName),
+		CapitalizeFirstLetter(chosenEvolution))
 
 	// Auto-save after evolving a Pokémon
 	cfg.changesSinceSync++

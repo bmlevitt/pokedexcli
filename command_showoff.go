@@ -4,10 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"strings"
-
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 // commandShowOff displays a Pokémon from the user's Pokédex performing a random move.
@@ -48,49 +44,10 @@ func commandShowOff(cfg *config, params []string) error {
 	moveName := pokemon.Moves[randomIndex].Move.Name
 
 	// Format the move name for better display (replace hyphens with spaces and capitalize words)
-	formattedMove := formatMoveName(moveName)
+	formattedMove := FormatMoveName(moveName)
 
 	// Show off the pokemon using the move
-	fmt.Printf("%s used %s!\n", capitalizeFirstLetter(pokemonName), formattedMove)
+	fmt.Printf("%s used %s!\n", CapitalizeFirstLetter(pokemonName), formattedMove)
 
 	return nil
-}
-
-// formatMoveName formats a move name by replacing hyphens with spaces and capitalizing each word.
-// This converts API move names (like "thunder-punch") to a user-friendly format (like "Thunder Punch").
-//
-// Parameters:
-//   - name: The raw move name with hyphens
-//
-// Returns:
-//   - A formatted move name with spaces and proper capitalization
-func formatMoveName(name string) string {
-	// Replace hyphens with spaces
-	name = strings.ReplaceAll(name, "-", " ")
-
-	// Split the name into words
-	words := strings.Fields(name)
-	for i, word := range words {
-		// Capitalize each word
-		words[i] = capitalizeFirstLetter(word)
-	}
-
-	// Join the words back together with spaces
-	return strings.Join(words, " ")
-}
-
-// capitalizeFirstLetter capitalizes the first letter of a string.
-// This is a utility function used throughout the application for consistent
-// text formatting of Pokémon names, move names, and other displayed text.
-//
-// Parameters:
-//   - s: The input string to capitalize
-//
-// Returns:
-//   - The string with its first letter capitalized, or the original string if empty
-func capitalizeFirstLetter(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return cases.Title(language.English).String(s)
 }
