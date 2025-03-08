@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // commandExplore retrieves and displays Pokémon that can be found at a specific location.
@@ -27,8 +28,10 @@ func commandExplore(cfg *config, params []string) error {
 	}
 
 	// Check if the input is a number
-	locationName := params[0]
-	locationNumber, err := strconv.Atoi(locationName)
+	locationNameOrNumber := params[0]
+	locationNumber, err := strconv.Atoi(locationNameOrNumber)
+
+	var apiLocationName string // This will store the API-formatted location name
 
 	// If the input is a number, convert it to the corresponding location name
 	if err == nil {
@@ -43,20 +46,71 @@ func commandExplore(cfg *config, params []string) error {
 		}
 
 		// Convert from 1-based user input to 0-based array index
-		locationName = cfg.recentLocations[locationNumber-1].Name
-		fmt.Printf("Exploring %s...\n", locationName)
+		apiLocationName = cfg.recentLocations[locationNumber-1].Name
+		formattedLocation := FormatLocationName(apiLocationName)
+		fmt.Printf("Exploring %s...\n", formattedLocation)
 	} else {
-		// If the input is a string, print a message for consistency
-		fmt.Printf("Exploring %s...\n", locationName)
+		// If the input is a string, first try to find it in the recently displayed locations
+		// This will handle cases where a user copies a formatted location name from the map
+		found := false
+		inputLower := strings.ToLower(locationNameOrNumber)
+
+		if len(cfg.recentLocations) > 0 {
+			// Try to match by comparing the formatted location name
+			for _, loc := range cfg.recentLocations {
+				formattedLoc := FormatLocationName(loc.Name)
+				if strings.EqualFold(formattedLoc, locationNameOrNumber) {
+					apiLocationName = loc.Name
+					fmt.Printf("Exploring %s...\n", formattedLoc)
+					found = true
+					break
+				}
+
+				// Also try matching by converting to API format
+				if strings.EqualFold(loc.Name, ConvertToAPIFormat(locationNameOrNumber)) {
+					apiLocationName = loc.Name
+					fmt.Printf("Exploring %s...\n", FormatLocationName(loc.Name))
+					found = true
+					break
+				}
+
+				// Try partial matching - if the input is a prefix of a location name
+				if strings.HasPrefix(strings.ToLower(formattedLoc), inputLower) {
+					apiLocationName = loc.Name
+					fmt.Printf("Exploring %s...\n", formattedLoc)
+					found = true
+					break
+				}
+			}
+		}
+
+		// If not found in recent locations, use the API format conversion
+		if !found {
+			apiLocationName = ConvertToAPIFormat(locationNameOrNumber)
+			formattedLocation := FormatLocationName(apiLocationName)
+			fmt.Printf("Exploring %s...\n", formattedLocation)
+		}
 	}
 
-	resp, err := cfg.pokeapiClient.ExploreLocation(locationName)
+	resp, err := cfg.pokeapiClient.ExploreLocation(apiLocationName)
 	if err != nil {
+		// If we get an error and have recent locations, try to provide suggestions
+		if len(cfg.recentLocations) > 0 {
+			fmt.Println("Location not found. Did you mean one of these?")
+			for i, loc := range cfg.recentLocations {
+				formattedLoc := FormatLocationName(loc.Name)
+				fmt.Printf("%d. %s\n", i+1, formattedLoc)
+			}
+			return fmt.Errorf("please select a valid location")
+		}
 		return err
 	}
-	fmt.Println("Found Pokemon:")
+
+	fmt.Println("Found Pokémon:")
 	for _, encounter := range resp.PokemonEncounters {
-		fmt.Printf(" - %s\n", encounter.Pokemon.Name)
+		formattedName := FormatPokemonName(encounter.Pokemon.Name)
+		fmt.Printf(" - %s\n", formattedName)
 	}
+	fmt.Println("-----")
 	return nil
 }

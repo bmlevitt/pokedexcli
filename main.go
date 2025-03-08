@@ -41,6 +41,7 @@ func main() {
 	} else if len(cfg.pokedex) > 0 {
 		fmt.Printf("Loaded Pokédex with %d Pokémon\n", len(cfg.pokedex))
 	}
+	fmt.Println("-----")
 
 	// Start the REPL (Read-Eval-Print Loop) with our config
 	startREPL(&cfg)

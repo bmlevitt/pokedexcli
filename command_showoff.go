@@ -26,17 +26,34 @@ func commandShowOff(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	pokemonName := params[0]
+	inputName := params[0]
+
+	// Convert the input name to API format if it's in a formatted style
+	apiPokemonName := ConvertToAPIFormat(inputName)
+	formattedName := FormatPokemonName(apiPokemonName)
 
 	// Check if the pokemon exists in the pokedex
-	pokemon, exists := cfg.pokedex[pokemonName]
+	pokemon, exists := cfg.pokedex[apiPokemonName]
 	if !exists {
-		return fmt.Errorf("%s is not in your pokedex", pokemonName)
+		// Check if it's a capitalization issue by trying all keys
+		found := false
+		for key := range cfg.pokedex {
+			if ConvertToAPIFormat(key) == apiPokemonName {
+				apiPokemonName = key
+				pokemon = cfg.pokedex[key]
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return fmt.Errorf("%s is not in your Pokédex", formattedName)
+		}
 	}
 
 	// Check if the pokemon has any moves
 	if len(pokemon.Moves) == 0 {
-		return fmt.Errorf("%s doesn't know any moves", pokemonName)
+		return fmt.Errorf("%s doesn't know any moves", formattedName)
 	}
 
 	// Select a random move
@@ -47,7 +64,8 @@ func commandShowOff(cfg *config, params []string) error {
 	formattedMove := FormatMoveName(moveName)
 
 	// Show off the pokemon using the move
-	fmt.Printf("%s used %s!\n", CapitalizeFirstLetter(pokemonName), formattedMove)
+	fmt.Printf("%s used %s!\n", formattedName, formattedMove)
+	fmt.Println("-----")
 
 	return nil
 }

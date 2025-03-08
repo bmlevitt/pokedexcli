@@ -25,6 +25,7 @@ func commandExit(cfg *config, params []string) error {
 	}
 
 	fmt.Println("Thanks for using the Pokédex! See you next time!")
+	fmt.Println("-----")
 	os.Exit(0)
 	return nil // This line is never reached but keeps the compiler happy
 }

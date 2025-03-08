@@ -25,24 +25,58 @@ func commandInspect(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	pokemonName := params[0]
+	inputName := params[0]
 
-	data, exists := cfg.pokedex[pokemonName]
+	// Convert the input name to API format if it's in a formatted style
+	apiPokemonName := ConvertToAPIFormat(inputName)
+	formattedName := FormatPokemonName(apiPokemonName)
+
+	data, exists := cfg.pokedex[apiPokemonName]
 	if exists {
-		fmt.Printf("Name: %s\n", pokemonName)
+		fmt.Printf("Name: %s\n", formattedName)
 		fmt.Printf("Height: %v\n", data.Height)
 		fmt.Printf("Weight: %v\n", data.Weight)
 		fmt.Printf("Stats:\n")
 		for _, stat := range data.Stats {
-			fmt.Printf(" - %v: %v\n", stat.Stat.Name, stat.BaseStat)
+			formattedStat := FormatStatName(stat.Stat.Name)
+			fmt.Printf(" - %s: %v\n", formattedStat, stat.BaseStat)
 		}
-		fmt.Printf("Type:\n")
+		fmt.Printf("Types:\n")
 		for _, typ := range data.Types {
-			fmt.Printf(" - %v\n", typ.Type.Name)
+			formattedType := FormatTypeName(typ.Type.Name)
+			fmt.Printf(" - %s\n", formattedType)
 		}
+		fmt.Println("-----")
 
 	} else {
-		fmt.Printf("%s has not been caught yet", pokemonName)
+		// Check if it's a capitalization issue by trying all keys in lowercase
+		found := false
+		for key := range cfg.pokedex {
+			if ConvertToAPIFormat(key) == apiPokemonName {
+				data = cfg.pokedex[key]
+				found = true
+				break
+			}
+		}
+
+		if found {
+			fmt.Printf("Name: %s\n", formattedName)
+			fmt.Printf("Height: %v\n", data.Height)
+			fmt.Printf("Weight: %v\n", data.Weight)
+			fmt.Printf("Stats:\n")
+			for _, stat := range data.Stats {
+				formattedStat := FormatStatName(stat.Stat.Name)
+				fmt.Printf(" - %s: %v\n", formattedStat, stat.BaseStat)
+			}
+			fmt.Printf("Types:\n")
+			for _, typ := range data.Types {
+				formattedType := FormatTypeName(typ.Type.Name)
+				fmt.Printf(" - %s\n", formattedType)
+			}
+			fmt.Println("-----")
+		} else {
+			fmt.Printf("%s has not been caught yet\n", formattedName)
+		}
 	}
 	return nil
 }

@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 // commandDescribe provides information about a Pokémon in the user's Pokédex.
@@ -30,16 +27,32 @@ func commandDescribe(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	pokemonName := params[0]
+	inputName := params[0]
 
-	// Check if the pokemon exists in the pokedex
-	_, exists := cfg.pokedex[pokemonName]
+	// Convert the input name to API format if it's in a formatted style
+	apiPokemonName := ConvertToAPIFormat(inputName)
+	formattedName := FormatPokemonName(apiPokemonName)
+
+	// First check for exact match
+	_, exists := cfg.pokedex[apiPokemonName]
 	if !exists {
-		return fmt.Errorf("%s is not in your pokedex", pokemonName)
+		// Check if it's a capitalization issue by trying all keys
+		found := false
+		for key := range cfg.pokedex {
+			if ConvertToAPIFormat(key) == apiPokemonName {
+				apiPokemonName = key
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return fmt.Errorf("%s is not in your Pokédex", formattedName)
+		}
 	}
 
 	// Fetch species data which contains descriptions and flavor text
-	speciesData, err := cfg.pokeapiClient.GetPokemonSpecies(pokemonName)
+	speciesData, err := cfg.pokeapiClient.GetPokemonSpecies(apiPokemonName)
 	if err != nil {
 		return fmt.Errorf("error fetching description: %v", err)
 	}
@@ -75,12 +88,10 @@ func commandDescribe(cfg *config, params []string) error {
 	}
 
 	// Display the Pokémon info
-	capitalizedName := cases.Title(language.English).String(strings.ToLower(pokemonName))
-	fmt.Println("-----")
 	if genus != "" {
-		fmt.Printf("%s, the %s\n", capitalizedName, genus)
+		fmt.Printf("%s, the %s\n", formattedName, genus)
 	} else {
-		fmt.Printf("%s\n", capitalizedName)
+		fmt.Printf("%s\n", formattedName)
 	}
 
 	// Display a random flavor text if available
@@ -88,13 +99,12 @@ func commandDescribe(cfg *config, params []string) error {
 		// Select a random flavor text
 		selectedEntry := englishFlavorTexts[rand.Intn(len(englishFlavorTexts))]
 
-		// Format the game name to look nicer
-		gameName := strings.ReplaceAll(selectedEntry.version, "-", " ")
-		gameName = cases.Title(language.English).String(strings.ToLower(gameName))
+		// Format the game name
+		formattedGameName := FormatLocationName(selectedEntry.version)
 
 		// Display the flavor text with the requested format
 		fmt.Printf("\"%s\"\n", selectedEntry.text)
-		fmt.Printf("(From Pokémon %s)\n", gameName)
+		fmt.Printf("(From Pokémon %s)\n", formattedGameName)
 		fmt.Println("-----")
 	} else {
 		fmt.Println("- No description available.")

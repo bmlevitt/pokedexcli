@@ -17,12 +17,14 @@ import "fmt"
 //   - Always returns nil as this command cannot fail under normal circumstances
 func commandPokedex(cfg *config, params []string) error {
 	if len(cfg.pokedex) == 0 {
-		fmt.Println("you have not caught any pokemon")
+		fmt.Println("You have not caught any Pokémon yet")
 	} else {
-		fmt.Println("Your Pokedex:")
+		fmt.Println("Your Pokédex:")
 		for key := range cfg.pokedex {
-			fmt.Printf(" - %s\n", key)
+			formattedName := FormatPokemonName(key)
+			fmt.Printf(" - %s\n", formattedName)
 		}
+		fmt.Println("-----")
 	}
 	return nil
 }

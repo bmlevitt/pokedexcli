@@ -20,17 +20,40 @@ func commandRelease(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	pokemonName := params[0]
+	inputName := params[0]
 
-	// Check if the pokemon exists in the pokedex
-	_, exists := cfg.pokedex[pokemonName]
-	if !exists {
-		return fmt.Errorf("%s is not in your pokedex", pokemonName)
+	// Convert the input name to API format if it's in a formatted style
+	apiPokemonName := ConvertToAPIFormat(inputName)
+	formattedName := FormatPokemonName(apiPokemonName)
+
+	// First check for exact match
+	_, exists := cfg.pokedex[apiPokemonName]
+	if exists {
+		// Remove the pokemon from the pokedex
+		delete(cfg.pokedex, apiPokemonName)
+		fmt.Printf("%s was released. Bye, %s!\n", formattedName, formattedName)
+		fmt.Println("-----")
+	} else {
+		// Check if it's a capitalization issue by trying all keys
+		found := false
+		var matchedKey string
+		for key := range cfg.pokedex {
+			if ConvertToAPIFormat(key) == apiPokemonName {
+				matchedKey = key
+				found = true
+				break
+			}
+		}
+
+		if found {
+			// Remove the pokemon from the pokedex
+			delete(cfg.pokedex, matchedKey)
+			fmt.Printf("%s was released. Bye, %s!\n", formattedName, formattedName)
+			fmt.Println("-----")
+		} else {
+			return fmt.Errorf("%s is not in your Pokédex", formattedName)
+		}
 	}
-
-	// Remove the pokemon from the pokedex
-	delete(cfg.pokedex, pokemonName)
-	fmt.Printf("%s was released. Bye, %s!\n", pokemonName, pokemonName)
 
 	// Auto-save after releasing a Pokémon
 	cfg.changesSinceSync++

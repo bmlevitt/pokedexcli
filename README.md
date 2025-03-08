@@ -49,7 +49,7 @@ After starting the application, you'll be presented with a command prompt. Here'
 - `map`: Explore the first page of map locations
 - `next`: Navigate to the next page of map locations
 - `prev`: Navigate to the previous page of map locations
-- `explore [location]`: List Pokémon that can be found at a specific location
+- `explore [location name or number]`: List Pokémon that can be found at a specific location
 - `catch [pokemon]`: Try to catch a specific Pokémon
 - `inspect [pokemon]`: View details about a Pokémon in your collection
 - `pokedex`: List all Pokémon in your collection

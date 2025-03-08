@@ -31,29 +31,45 @@ func commandEvolve(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	pokemonName := params[0]
+	inputName := params[0]
+
+	// Convert the input name to API format if it's in a formatted style
+	apiPokemonName := ConvertToAPIFormat(inputName)
+	formattedName := FormatPokemonName(apiPokemonName)
 
 	// Check if the pokemon exists in the pokedex
-	_, exists := cfg.pokedex[pokemonName]
+	_, exists := cfg.pokedex[apiPokemonName]
 	if !exists {
-		return fmt.Errorf("%s is not in your pokedex", pokemonName)
+		// Check if it's a capitalization issue by trying all keys
+		found := false
+		for key := range cfg.pokedex {
+			if ConvertToAPIFormat(key) == apiPokemonName {
+				apiPokemonName = key
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return fmt.Errorf("%s is not in your Pokédex", formattedName)
+		}
 	}
 
 	// Get the evolution chain for the Pokemon
-	evolutionChain, err := cfg.pokeapiClient.GetEvolutionChainBySpecies(pokemonName)
+	evolutionChain, err := cfg.pokeapiClient.GetEvolutionChainBySpecies(apiPokemonName)
 	if err != nil {
 		return fmt.Errorf("error getting evolution data: %v", err)
 	}
 
 	// Find the Pokemon in the evolution chain and its possible evolutions
-	evolutions, err := findEvolutionsFor(pokemonName, evolutionChain.Chain)
+	evolutions, err := findEvolutionsFor(apiPokemonName, evolutionChain.Chain)
 	if err != nil {
 		return err
 	}
 
 	// Check if the Pokemon can evolve
 	if len(evolutions) == 0 {
-		return fmt.Errorf("%s cannot evolve any further", pokemonName)
+		return fmt.Errorf("%s cannot evolve any further", formattedName)
 	}
 
 	// Handle multiple evolution options
@@ -63,9 +79,10 @@ func commandEvolve(cfg *config, params []string) error {
 		chosenEvolution = evolutions[0].Species.Name
 	} else {
 		// Multiple evolution options - let user choose
-		fmt.Printf("%s can evolve into multiple forms:\n", pokemonName)
+		fmt.Printf("%s can evolve into multiple forms:\n", formattedName)
 		for i, evolution := range evolutions {
-			fmt.Printf(" %d. %s\n", i+1, CapitalizeFirstLetter(evolution.Species.Name))
+			formattedEvolution := FormatPokemonName(evolution.Species.Name)
+			fmt.Printf(" %d. %s\n", i+1, formattedEvolution)
 		}
 
 		// If additional parameters were provided, they might specify which evolution
@@ -75,9 +92,10 @@ func commandEvolve(cfg *config, params []string) error {
 			if err == nil && selection > 0 && selection <= len(evolutions) {
 				chosenEvolution = evolutions[selection-1].Species.Name
 			} else {
-				// Check if it matches an evolution name
+				// Check if it matches an evolution name - convert to API format first
+				evolutionInput := ConvertToAPIFormat(params[1])
 				for _, evolution := range evolutions {
-					if strings.EqualFold(evolution.Species.Name, params[1]) {
+					if strings.EqualFold(evolution.Species.Name, evolutionInput) {
 						chosenEvolution = evolution.Species.Name
 						break
 					}
@@ -99,23 +117,25 @@ func commandEvolve(cfg *config, params []string) error {
 	}
 
 	// Evolve the Pokemon
-	fmt.Printf("Evolving %s into %s...\n", pokemonName, CapitalizeFirstLetter(chosenEvolution))
+	formattedEvolution := FormatPokemonName(chosenEvolution)
+	fmt.Printf("Evolving %s into %s...\n", formattedName, formattedEvolution)
 
 	// Get the evolution's data
 	evolvedPokemonData, err := cfg.pokeapiClient.GetPokemonData(chosenEvolution)
 	if err != nil {
-		return fmt.Errorf("error fetching evolved Pokemon data: %v", err)
+		return fmt.Errorf("error fetching evolved Pokémon data: %v", err)
 	}
 
 	// Remove the original Pokemon from the pokedex
-	delete(cfg.pokedex, pokemonName)
+	delete(cfg.pokedex, apiPokemonName)
 
 	// Add the evolved Pokemon to the pokedex
 	cfg.pokedex[chosenEvolution] = evolvedPokemonData
 
 	fmt.Printf("Congratulations! Your %s evolved into %s!\n",
-		CapitalizeFirstLetter(pokemonName),
-		CapitalizeFirstLetter(chosenEvolution))
+		formattedName,
+		formattedEvolution)
+	fmt.Println("-----")
 
 	// Auto-save after evolving a Pokémon
 	cfg.changesSinceSync++
@@ -129,33 +149,28 @@ func commandEvolve(cfg *config, params []string) error {
 	return nil
 }
 
-// findEvolutionsFor recursively searches the evolution chain for a specified Pokémon
-// and returns its possible evolutions.
-//
-// This helper function traverses the evolution chain structure to find where the
-// target Pokémon exists in the chain, then returns the next evolutions in the sequence.
+// findEvolutionsFor searches the evolution chain for a specific Pokémon
+// and returns a list of its possible evolutions.
 //
 // Parameters:
-//   - pokemonName: The name of the Pokémon to find in the evolution chain
-//   - chainLink: The current node in the evolution chain to search
+//   - pokemonName: The name of the Pokémon to find evolutions for
+//   - chainLink: The current node in the evolution chain tree
 //
 // Returns:
-//   - A slice of ChainLink objects representing possible evolutions
-//   - An error if the Pokémon is not found in the evolution chain
+//   - A slice of chain links representing possible evolutions for the Pokémon
+//   - An error if the Pokémon cannot be found in the evolution chain
 func findEvolutionsFor(pokemonName string, chainLink pokeapi.ChainLink) ([]pokeapi.ChainLink, error) {
-	// Check if this is the Pokemon we're looking for
+	// Check if this link is the Pokemon we're looking for
 	if strings.EqualFold(chainLink.Species.Name, pokemonName) {
-		// If this is our Pokemon, return its possible evolutions
 		return chainLink.EvolvesTo, nil
 	}
 
-	// If not, search in the evolution chain
+	// Recursively check each child evolution
 	for _, evolution := range chainLink.EvolvesTo {
-		result, err := findEvolutionsFor(pokemonName, evolution)
-		if err == nil {
-			return result, nil
+		if found, err := findEvolutionsFor(pokemonName, evolution); err == nil {
+			return found, nil
 		}
 	}
 
-	return nil, fmt.Errorf("couldn't find %s in the evolution chain", pokemonName)
+	return nil, fmt.Errorf("could not find %s in the evolution chain", pokemonName)
 }

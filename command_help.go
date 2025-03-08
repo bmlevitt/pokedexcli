@@ -19,10 +19,10 @@ import (
 //   - Always returns nil as this command cannot fail under normal circumstances
 func commandHelp(cfg *config, params []string) error {
 	fmt.Println("Welcome to the Pokedex!")
-	fmt.Println("--------------------")
+	fmt.Println("-----")
 	for _, cmd := range getCommands() {
 		fmt.Printf("%s | %s \n", cmd.name, cmd.description)
 	}
-	fmt.Println("--------------------")
+	fmt.Println("-----")
 	return nil
 }

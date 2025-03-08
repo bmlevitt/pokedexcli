@@ -34,8 +34,10 @@ func commandMap(cfg *config, params []string) error {
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
-		fmt.Printf("%d. %s\n", i+1, loc.Name)
+		formattedLocation := FormatLocationName(loc.Name)
+		fmt.Printf("%d. %s\n", i+1, formattedLocation)
 	}
+	fmt.Println("-----")
 
 	return nil
 }
@@ -54,9 +56,8 @@ func commandMap(cfg *config, params []string) error {
 // Returns:
 //   - An error if there's an issue with the API request or if there are no more pages
 func commandNext(cfg *config, params []string) error {
-	// Check if there's a next page URL
 	if cfg.nextLocationURL == nil {
-		return errors.New("you are on the last page")
+		return errors.New("no more pages available")
 	}
 
 	// Get the next page of locations
@@ -74,7 +75,8 @@ func commandNext(cfg *config, params []string) error {
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
-		fmt.Printf("%d. %s\n", i+1, loc.Name)
+		formattedLocation := FormatLocationName(loc.Name)
+		fmt.Printf("%d. %s\n", i+1, formattedLocation)
 	}
 
 	return nil
@@ -90,9 +92,8 @@ func commandNext(cfg *config, params []string) error {
 // Returns:
 //   - An error if there's an issue with the API request or if there are no previous pages
 func commandPrev(cfg *config, params []string) error {
-	// Check if there's a previous page URL
 	if cfg.prevLocationURL == nil {
-		return errors.New("you are on the first page")
+		return errors.New("already at the first page")
 	}
 
 	// Get the previous page of locations
@@ -110,7 +111,8 @@ func commandPrev(cfg *config, params []string) error {
 
 	// Display the location areas
 	for i, loc := range locationsResp.Results {
-		fmt.Printf("%d. %s\n", i+1, loc.Name)
+		formattedLocation := FormatLocationName(loc.Name)
+		fmt.Printf("%d. %s\n", i+1, formattedLocation)
 	}
 
 	return nil

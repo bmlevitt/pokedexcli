@@ -26,26 +26,29 @@ func commandCatch(cfg *config, params []string) error {
 	if len(params) == 0 {
 		return errors.New("no pokemon name provided")
 	}
-	pokemonName := params[0]
+	inputName := params[0]
+
+	// Convert the input name to API format if it's in a formatted style
+	apiPokemonName := ConvertToAPIFormat(inputName)
+	formattedName := FormatPokemonName(apiPokemonName)
 
 	// Fetch pokemon capture rate
-	resp, err := cfg.pokeapiClient.GetPokemonCaptureRate(pokemonName)
+	resp, err := cfg.pokeapiClient.GetPokemonCaptureRate(apiPokemonName)
 	if err != nil {
 		return err
 	}
 
 	captureRate := resp.CaptureRate
-
-	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
+	fmt.Printf("Throwing a Pokéball at %s...\n", formattedName)
 	randNum := rand.Intn(256)
 	caught := randNum < captureRate
 	if caught {
-		pokeData, err := cfg.pokeapiClient.GetPokemonData(pokemonName)
+		pokeData, err := cfg.pokeapiClient.GetPokemonData(apiPokemonName)
 		if err != nil {
 			return err
 		}
-		cfg.pokedex[pokemonName] = pokeData
-		fmt.Printf("%s was caught!\n", pokemonName)
+		cfg.pokedex[apiPokemonName] = pokeData
+		fmt.Printf("%s was caught!\n", formattedName)
 
 		// Auto-save after catching a Pokémon
 		cfg.changesSinceSync++
@@ -56,7 +59,8 @@ func commandCatch(cfg *config, params []string) error {
 			cfg.changesSinceSync = 0
 		}
 	} else {
-		fmt.Printf("%s escaped!\n", pokemonName)
+		fmt.Printf("%s escaped!\n", formattedName)
 	}
+	fmt.Println("-----")
 	return nil
 }
