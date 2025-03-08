@@ -1,8 +1,9 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
 // commandMap navigates to the next page of Pokémon location areas.
@@ -22,7 +23,11 @@ func commandMap(cfg *config, params []string) error {
 	// Get the URL to use - always use the base URL (nil) for the initial map command
 	var locationsResp, err = cfg.pokeapiClient.ListLocationAreas(nil)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "map", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Update shared state with a lock
@@ -62,18 +67,41 @@ func commandMap(cfg *config, params []string) error {
 func commandNext(cfg *config, params []string) error {
 	// Check if map has been viewed in this session
 	if !cfg.mapViewedThisSession {
-		return errors.New("you need to use the 'map' command first to load locations")
+		// Create a specific error for this case
+		noMapViewedErr := errorhandling.NewInvalidInputError("You need to use the 'map' command first to load locations", nil)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "next", noMapViewedErr) {
+			return noMapViewedErr
+		}
+		return nil
 	}
 
-	// Check if there's a next page URL
-	if cfg.nextLocationURL == nil {
-		return errors.New("you're on the last page")
+	// Lock to prevent race conditions when reading/writing shared state
+	cfg.mutex.RLock()
+	nextURL := cfg.nextLocationURL
+	cfg.mutex.RUnlock()
+
+	// Check if there's a next page
+	if nextURL == nil {
+		// Create a specific error for this case
+		noNextErr := errorhandling.NewInvalidInputError("You're on the last page", nil)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "next", noNextErr) {
+			return noNextErr
+		}
+		return nil
 	}
 
-	// Get the next page of locations
+	// Make the API request with the next URL
 	locationsResp, err := cfg.pokeapiClient.ListLocationAreas(cfg.nextLocationURL)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "next", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Update shared state with a lock
@@ -107,18 +135,41 @@ func commandNext(cfg *config, params []string) error {
 func commandPrev(cfg *config, params []string) error {
 	// Check if map has been viewed in this session
 	if !cfg.mapViewedThisSession {
-		return errors.New("you need to use the 'map' command first to load locations")
+		// Create a specific error for this case
+		noMapViewedErr := errorhandling.NewInvalidInputError("You need to use the 'map' command first to load locations", nil)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "prev", noMapViewedErr) {
+			return noMapViewedErr
+		}
+		return nil
 	}
 
-	// Check if there's a previous page URL
-	if cfg.prevLocationURL == nil {
-		return errors.New("you're on the first page")
+	// Lock to prevent race conditions when reading/writing shared state
+	cfg.mutex.RLock()
+	prevURL := cfg.prevLocationURL
+	cfg.mutex.RUnlock()
+
+	// Check if there's a previous page
+	if prevURL == nil {
+		// Create a specific error for this case
+		noPrevErr := errorhandling.NewInvalidInputError("You're on the first page", nil)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "prev", noPrevErr) {
+			return noPrevErr
+		}
+		return nil
 	}
 
-	// Get the previous page of locations
+	// Make the API request with the previous URL
 	locationsResp, err := cfg.pokeapiClient.ListLocationAreas(cfg.prevLocationURL)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "prev", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Update shared state with a lock

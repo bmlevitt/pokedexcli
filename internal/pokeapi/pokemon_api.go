@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
 // GetPokemonData retrieves detailed information about a specific Pokemon
@@ -18,7 +20,7 @@ func (c *Client) GetPokemonData(pokemon string) (PokemonDataResp, error) {
 		pokemonDataResp := PokemonDataResp{}
 		err := json.Unmarshal(data, &pokemonDataResp)
 		if err != nil {
-			return PokemonDataResp{}, err
+			return PokemonDataResp{}, fmt.Errorf("error unmarshaling cached pokemon data: %w", err)
 		}
 		return pokemonDataResp, nil
 	}
@@ -26,25 +28,28 @@ func (c *Client) GetPokemonData(pokemon string) (PokemonDataResp, error) {
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
-		return PokemonDataResp{}, err
+		return PokemonDataResp{}, errorhandling.NewNetworkError("Failed to create HTTP request", err)
 	}
 
 	// Send the request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return PokemonDataResp{}, err
+		return PokemonDataResp{}, errorhandling.NewNetworkError("Failed to connect to the Pokémon API", err)
 	}
 	defer resp.Body.Close()
 
 	// Check if the response was successful
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return PokemonDataResp{}, fmt.Errorf("HTTP error: %d", resp.StatusCode)
+		if resp.StatusCode == http.StatusNotFound {
+			return PokemonDataResp{}, errorhandling.PokemonNotFoundError(pokemon, fmt.Errorf("HTTP 404"))
+		}
+		return PokemonDataResp{}, errorhandling.NewAPIError(resp.StatusCode, endpoint+pokemon, fmt.Errorf("HTTP error: %d", resp.StatusCode))
 	}
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return PokemonDataResp{}, err
+		return PokemonDataResp{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	// Store in cache
@@ -54,7 +59,7 @@ func (c *Client) GetPokemonData(pokemon string) (PokemonDataResp, error) {
 	pokemonDataResp := PokemonDataResp{}
 	err = json.Unmarshal(body, &pokemonDataResp)
 	if err != nil {
-		return PokemonDataResp{}, err
+		return PokemonDataResp{}, fmt.Errorf("error unmarshaling response: %w", err)
 	}
 
 	return pokemonDataResp, nil
@@ -65,7 +70,7 @@ func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, 
 	// First, we need to fetch the species URL from the pokemon data
 	pokemonData, err := c.GetPokemonData(pokemon)
 	if err != nil {
-		return PokemonCaptureRateResp{}, err
+		return PokemonCaptureRateResp{}, fmt.Errorf("error fetching pokemon data: %w", err)
 	}
 
 	// Extract the species URL
@@ -77,13 +82,13 @@ func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, 
 		var speciesResp map[string]interface{}
 		err := json.Unmarshal(data, &speciesResp)
 		if err != nil {
-			return PokemonCaptureRateResp{}, err
+			return PokemonCaptureRateResp{}, fmt.Errorf("error unmarshaling cached species data: %w", err)
 		}
 
 		// Extract the capture rate from the response
 		captureRate, ok := speciesResp["capture_rate"].(float64)
 		if !ok {
-			return PokemonCaptureRateResp{}, fmt.Errorf("failed to extract capture rate")
+			return PokemonCaptureRateResp{}, fmt.Errorf("missing capture rate in species data")
 		}
 
 		return PokemonCaptureRateResp{CaptureRate: int(captureRate)}, nil
@@ -92,25 +97,34 @@ func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, 
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", speciesURL, nil)
 	if err != nil {
-		return PokemonCaptureRateResp{}, err
+		return PokemonCaptureRateResp{}, errorhandling.NewNetworkError("Failed to create HTTP request", err)
 	}
 
 	// Send the request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return PokemonCaptureRateResp{}, err
+		return PokemonCaptureRateResp{}, errorhandling.NewNetworkError("Failed to connect to the Pokémon API", err)
 	}
 	defer resp.Body.Close()
 
 	// Check if the response was successful
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return PokemonCaptureRateResp{}, fmt.Errorf("HTTP error: %d", resp.StatusCode)
+		// Extract resource type from URL for better error messages
+		resourceType := errorhandling.ResourcePokemonSpecies
+		resourceName := pokemon
+
+		if resp.StatusCode == http.StatusNotFound {
+			return PokemonCaptureRateResp{}, errorhandling.FormatResourceNotFoundError(resourceType, resourceName, fmt.Errorf("HTTP 404"))
+		}
+
+		endpoint := fmt.Sprintf("species URL for %s", pokemon)
+		return PokemonCaptureRateResp{}, errorhandling.NewAPIError(resp.StatusCode, endpoint, fmt.Errorf("HTTP error: %d", resp.StatusCode))
 	}
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return PokemonCaptureRateResp{}, err
+		return PokemonCaptureRateResp{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	// Store in cache
@@ -120,13 +134,13 @@ func (c *Client) GetPokemonCaptureRate(pokemon string) (PokemonCaptureRateResp, 
 	var speciesResp map[string]interface{}
 	err = json.Unmarshal(body, &speciesResp)
 	if err != nil {
-		return PokemonCaptureRateResp{}, err
+		return PokemonCaptureRateResp{}, fmt.Errorf("error unmarshaling response: %w", err)
 	}
 
 	// Extract the capture rate from the response
 	captureRate, ok := speciesResp["capture_rate"].(float64)
 	if !ok {
-		return PokemonCaptureRateResp{}, fmt.Errorf("failed to extract capture rate")
+		return PokemonCaptureRateResp{}, fmt.Errorf("missing capture rate in species data")
 	}
 
 	return PokemonCaptureRateResp{CaptureRate: int(captureRate)}, nil
@@ -143,7 +157,7 @@ func (c *Client) GetPokemonSpecies(pokemon string) (PokemonSpeciesResp, error) {
 		speciesResp := PokemonSpeciesResp{}
 		err := json.Unmarshal(data, &speciesResp)
 		if err != nil {
-			return PokemonSpeciesResp{}, err
+			return PokemonSpeciesResp{}, fmt.Errorf("error unmarshaling cached species data: %w", err)
 		}
 		return speciesResp, nil
 	}
@@ -151,25 +165,28 @@ func (c *Client) GetPokemonSpecies(pokemon string) (PokemonSpeciesResp, error) {
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
-		return PokemonSpeciesResp{}, err
+		return PokemonSpeciesResp{}, errorhandling.NewNetworkError("Failed to create HTTP request", err)
 	}
 
 	// Send the request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return PokemonSpeciesResp{}, err
+		return PokemonSpeciesResp{}, errorhandling.NewNetworkError("Failed to connect to the Pokémon API", err)
 	}
 	defer resp.Body.Close()
 
 	// Check if the response was successful
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return PokemonSpeciesResp{}, fmt.Errorf("HTTP error: %d", resp.StatusCode)
+		if resp.StatusCode == http.StatusNotFound {
+			return PokemonSpeciesResp{}, errorhandling.FormatResourceNotFoundError(errorhandling.ResourcePokemonSpecies, pokemon, fmt.Errorf("HTTP 404"))
+		}
+		return PokemonSpeciesResp{}, errorhandling.NewAPIError(resp.StatusCode, endpoint+pokemon, fmt.Errorf("HTTP error: %d", resp.StatusCode))
 	}
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return PokemonSpeciesResp{}, err
+		return PokemonSpeciesResp{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	// Store in cache
@@ -179,7 +196,7 @@ func (c *Client) GetPokemonSpecies(pokemon string) (PokemonSpeciesResp, error) {
 	speciesResp := PokemonSpeciesResp{}
 	err = json.Unmarshal(body, &speciesResp)
 	if err != nil {
-		return PokemonSpeciesResp{}, err
+		return PokemonSpeciesResp{}, fmt.Errorf("error unmarshaling response: %w", err)
 	}
 
 	return speciesResp, nil

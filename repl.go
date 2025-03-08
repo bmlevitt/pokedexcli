@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
 // cliCommand represents a command that can be executed in the CLI.
@@ -105,6 +108,11 @@ func getCommands() map[string]cliCommand {
 			description: "Exit the Pokedex",
 			callback:    commandExit,
 		},
+		"debug": {
+			name:        "debug",
+			description: "Toggle debug mode to show detailed error information",
+			callback:    commandToggleDebug,
+		},
 	}
 }
 
@@ -128,52 +136,79 @@ func cleanInput(text string) []string {
 	return slice
 }
 
-// startREPL starts the Read-Eval-Print Loop for the Pokedex CLI.
-// This is the main interaction loop that:
-//  1. Reads user input (Read)
-//  2. Evaluates the command (Eval)
-//  3. Prints the result (Print)
-//  4. Loops back for the next command
+// startREPL begins the read-eval-print loop for the CLI application.
+// It continuously reads user input, processes commands, and displays the results
+// until the user chooses to exit the application with the 'exit' command.
 //
-// The REPL continues until the user explicitly exits using the 'exit' command.
+// Each command is looked up in the command map, validated, and executed with
+// the provided parameters. Errors are handled and displayed to the user.
 //
 // Parameters:
-//   - cfg: The application configuration shared across all commands
+//   - cfg: The application configuration to be shared with all commands
 func startREPL(cfg *config) {
-	reader := bufio.NewScanner(os.Stdin)
-	var parameters []string
+	reader := bufio.NewReader(os.Stdin)
+	commands := getCommands()
 
+	// Display initial welcome and instructions
+	fmt.Println("Welcome to the Pokédex!")
+	fmt.Println("Type 'help' for a list of commands.")
+
+	// Set up debug logging if enabled
+	if cfg.debugMode {
+		log.SetOutput(os.Stderr)
+	} else {
+		// Discard logs when not in debug mode
+		log.SetOutput(nil)
+	}
+
+	// Loop until exit
 	for {
-		// Display prompt and get user input
-		parameters = []string{}
-		fmt.Print("Pokedex > ")
-		reader.Scan()
-
-		// Clean and parse the input
-		words := cleanInput(reader.Text())
-		if len(words) == 0 {
-			continue
-		}
-
-		// Get command name
-		commandName := words[0]
-
-		// Get second word as parameter if it exists
-		if len(words) > 1 {
-			parameters = append(parameters, words[1])
-		}
-
-		// Look up and execute the command if it exists
-		command, exists := getCommands()[commandName]
-		if exists {
-			err := command.callback(cfg, parameters)
-			if err != nil {
-				fmt.Println(err)
+		fmt.Print("Pokédex > ")
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			// Check if it's an EOF error, which happens when piping commands
+			if err.Error() == "EOF" {
+				// Exit gracefully on EOF
+				fmt.Println("Exiting Pokédex. Goodbye!")
+				return
 			}
+
+			// For other errors, log and continue
+			fmt.Println("Error reading input:", err)
 			continue
-		} else {
-			fmt.Println("unknown command")
+		}
+
+		// Clean input and split into command and parameters
+		cleaned := cleanInput(input)
+		if len(cleaned) == 0 {
 			continue
+		}
+		commandName := cleaned[0]
+		parameters := []string{}
+		if len(cleaned) > 1 {
+			parameters = cleaned[1:]
+		}
+
+		// Find the command in our available commands
+		command, exists := commands[commandName]
+		if !exists {
+			fmt.Printf("Unknown command: %s\n", commandName)
+			fmt.Println("Type 'help' for a list of commands.")
+			fmt.Println("-----")
+			continue
+		}
+
+		// Execute the command
+		err = command.callback(cfg, parameters)
+		if err != nil {
+			// Log the full error for debugging
+			if cfg.debugMode {
+				log.Printf("ERROR: [%s] %v", commandName, err)
+			}
+
+			// Format error message for display to user
+			fmt.Printf("Error: %s\n", errorhandling.FormatUserMessage(err))
+			fmt.Println("-----")
 		}
 	}
 }

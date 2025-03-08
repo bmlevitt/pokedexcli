@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
 // PokemonNameInfo encapsulates information about a Pokémon's name in different formats
@@ -48,10 +50,9 @@ func CheckPokemonExists(cfg *config, pokemonName string) (string, bool, interfac
 	return nameInfo.APIFormat, false, nil
 }
 
-// HandlePokemonNotFound returns an error with a standard message when a Pokémon is not found
-func HandlePokemonNotFound(pokemonName string) error {
-	formatted := FormatPokemonName(pokemonName)
-	return fmt.Errorf("%s is not in your Pokédex", formatted)
+// HandlePokemonNotInPokedex returns an error with a standard message when a Pokémon is not found in the Pokédex
+func HandlePokemonNotInPokedex(pokemonName string) error {
+	return errorhandling.PokemonNotInPokedexError(pokemonName)
 }
 
 // UpdatePokedexAndSave handles all the auto-save logic after a change to the Pokédex

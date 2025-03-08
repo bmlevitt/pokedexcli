@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 	"github.com/bmlevitt/pokedexcli/internal/pokeapi"
 )
 
@@ -29,23 +30,47 @@ func commandEvolve(cfg *config, params []string) error {
 	// Use the utility function to validate the Pokemon parameter and check if it exists
 	apiName, nameInfo, _, _, err := GetPokemonIfExists(cfg, params)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "evolve", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Get the evolution chain for the Pokemon
 	evolutionChain, err := cfg.pokeapiClient.GetEvolutionChainBySpecies(apiName)
 	if err != nil {
-		return fmt.Errorf("error getting evolution data: %v", err)
+		// Use standardized error handling
+		if HandleCommandError(cfg, "evolve", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Find the Pokemon in the evolution chain and its possible evolutions
 	evolutions, err := findEvolutionsFor(apiName, evolutionChain.Chain)
 	if err != nil {
-		return err
+		// Create a specific error for this case
+		evolveErr := errorhandling.NewInvalidInputError(
+			fmt.Sprintf("%s cannot evolve (not found in evolution chain)", nameInfo.Formatted), err)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "evolve", evolveErr) {
+			return evolveErr
+		}
+		return nil
 	}
 
 	if len(evolutions) == 0 {
-		return fmt.Errorf("%s cannot evolve any further", nameInfo.Formatted)
+		// Create a specific error for this case
+		evolveErr := errorhandling.NewInvalidInputError(
+			fmt.Sprintf("%s cannot evolve any further", nameInfo.Formatted), nil)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "evolve", evolveErr) {
+			return evolveErr
+		}
+		return nil
 	}
 
 	// Handle evolution choice
@@ -79,7 +104,8 @@ func commandEvolve(cfg *config, params []string) error {
 						formattedEvolution := FormatPokemonName(evolution.Species.Name)
 						fmt.Printf("%d. %s\n", i+1, formattedEvolution)
 					}
-					return fmt.Errorf("invalid evolution selection: %s", selection)
+					return errorhandling.NewInvalidInputError(
+						fmt.Sprintf("Invalid evolution selection: '%s'", selection), nil)
 				}
 			}
 		} else {
@@ -89,7 +115,8 @@ func commandEvolve(cfg *config, params []string) error {
 				formattedEvolution := FormatPokemonName(evolution.Species.Name)
 				fmt.Printf("%d. %s\n", i+1, formattedEvolution)
 			}
-			return fmt.Errorf("please specify which evolution to use (e.g., 'evolve %s 1')", nameInfo.APIFormat)
+			return errorhandling.NewInvalidInputError(
+				fmt.Sprintf("Please specify which evolution to use (e.g., 'evolve %s 1')", nameInfo.APIFormat), nil)
 		}
 	}
 
@@ -98,7 +125,11 @@ func commandEvolve(cfg *config, params []string) error {
 	evolvedFormattedName := FormatPokemonName(evolvedName)
 	evolvedData, err := cfg.pokeapiClient.GetPokemonData(evolvedName)
 	if err != nil {
-		return fmt.Errorf("error getting evolved Pokémon data: %v", err)
+		// Use standardized error handling
+		if HandleCommandError(cfg, "evolve", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Add evolved form to pokedex
@@ -115,7 +146,9 @@ func commandEvolve(cfg *config, params []string) error {
 
 	// Auto-save after evolving
 	if err := UpdatePokedexAndSave(cfg); err != nil {
-		return err
+		// Use standardized error handling but don't return the error
+		// since we still want to show the success message
+		HandleCommandError(cfg, "evolve", err)
 	}
 
 	return nil

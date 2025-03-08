@@ -21,6 +21,7 @@ type config struct {
 	recentLocations      []pokeapi.NamedAPIResource         // Most recent list of locations displayed
 	mapViewedThisSession bool                               // Whether the map command has been used in this session
 	mutex                sync.RWMutex                       // Mutex to protect access to shared data
+	debugMode            bool                               // Whether to show detailed error messages
 }
 
 // main is the entry point for the Pokédex CLI application.
@@ -35,6 +36,7 @@ func main() {
 		autoSaveInterval:     1,     // Save after every change by default
 		changesSinceSync:     0,     // No changes yet
 		mapViewedThisSession: false, // Map hasn't been viewed in this session yet
+		debugMode:            false, // Debug mode is disabled by default
 	}
 
 	// Try to load saved data

@@ -1,5 +1,8 @@
 # Binary files
 pokedexcli
 
+# Test files
+test_commands.sh
+
 # Cursor files
 .cursor/

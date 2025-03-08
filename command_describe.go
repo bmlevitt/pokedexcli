@@ -24,13 +24,21 @@ func commandDescribe(cfg *config, params []string) error {
 	// Use the utility function to validate the Pokemon parameter and check if it exists
 	apiName, nameInfo, _, _, err := GetPokemonIfExists(cfg, params)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "describe", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Fetch species data for the pokemon
 	speciesData, err := cfg.pokeapiClient.GetPokemonSpecies(apiName)
 	if err != nil {
-		return fmt.Errorf("error fetching species data: %v", err)
+		// Use standardized error handling
+		if HandleCommandError(cfg, "describe", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Find the English genus

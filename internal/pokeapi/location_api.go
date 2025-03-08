@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
 // ListLocationAreas retrieves a list of location areas from the PokeAPI
@@ -21,7 +23,7 @@ func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
 		locationAreasResp := LocationAreasResp{}
 		err := json.Unmarshal(data, &locationAreasResp)
 		if err != nil {
-			return LocationAreasResp{}, err
+			return LocationAreasResp{}, fmt.Errorf("error unmarshaling cached location data: %w", err)
 		}
 		return locationAreasResp, nil
 	}
@@ -29,25 +31,29 @@ func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
-		return LocationAreasResp{}, err
+		return LocationAreasResp{}, errorhandling.NewNetworkError("Failed to create HTTP request", err)
 	}
 
 	// Send the request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return LocationAreasResp{}, err
+		return LocationAreasResp{}, errorhandling.NewNetworkError("Failed to connect to the Pokémon API", err)
 	}
 	defer resp.Body.Close()
 
 	// Check if the response was successful
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return LocationAreasResp{}, fmt.Errorf("HTTP error: %d", resp.StatusCode)
+		reqEndpoint := endpoint
+		if pageURL != nil {
+			reqEndpoint = *pageURL
+		}
+		return LocationAreasResp{}, errorhandling.NewAPIError(resp.StatusCode, reqEndpoint, fmt.Errorf("HTTP error: %d", resp.StatusCode))
 	}
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return LocationAreasResp{}, err
+		return LocationAreasResp{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	// Store in cache
@@ -57,7 +63,7 @@ func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
 	locationAreasResp := LocationAreasResp{}
 	err = json.Unmarshal(body, &locationAreasResp)
 	if err != nil {
-		return LocationAreasResp{}, err
+		return LocationAreasResp{}, fmt.Errorf("error unmarshaling response: %w", err)
 	}
 
 	return locationAreasResp, nil
@@ -73,7 +79,7 @@ func (c *Client) ExploreLocation(location string) (LocationExploreResp, error) {
 		locationExploreResp := LocationExploreResp{}
 		err := json.Unmarshal(data, &locationExploreResp)
 		if err != nil {
-			return LocationExploreResp{}, err
+			return LocationExploreResp{}, fmt.Errorf("error unmarshaling cached location data: %w", err)
 		}
 		return locationExploreResp, nil
 	}
@@ -81,25 +87,28 @@ func (c *Client) ExploreLocation(location string) (LocationExploreResp, error) {
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
-		return LocationExploreResp{}, err
+		return LocationExploreResp{}, errorhandling.NewNetworkError("Failed to create HTTP request", err)
 	}
 
 	// Send the request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return LocationExploreResp{}, err
+		return LocationExploreResp{}, errorhandling.NewNetworkError("Failed to connect to the Pokémon API", err)
 	}
 	defer resp.Body.Close()
 
 	// Check if the response was successful
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return LocationExploreResp{}, fmt.Errorf("HTTP error: %d", resp.StatusCode)
+		if resp.StatusCode == http.StatusNotFound {
+			return LocationExploreResp{}, errorhandling.LocationNotFoundError(location, fmt.Errorf("HTTP 404"))
+		}
+		return LocationExploreResp{}, errorhandling.NewAPIError(resp.StatusCode, endpoint+location, fmt.Errorf("HTTP error: %d", resp.StatusCode))
 	}
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return LocationExploreResp{}, err
+		return LocationExploreResp{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	// Store in cache
@@ -109,7 +118,7 @@ func (c *Client) ExploreLocation(location string) (LocationExploreResp, error) {
 	locationExploreResp := LocationExploreResp{}
 	err = json.Unmarshal(body, &locationExploreResp)
 	if err != nil {
-		return LocationExploreResp{}, err
+		return LocationExploreResp{}, fmt.Errorf("error unmarshaling response: %w", err)
 	}
 
 	return locationExploreResp, nil

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
+
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
 // ValidateLocationParam checks if a location number parameter was provided
@@ -40,23 +41,50 @@ func commandExplore(cfg *config, params []string) error {
 	// Validate the location parameter
 	locNumStr, err := ValidateLocationParam(params)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "explore", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Parse the location number from input
 	locationNumber, err := strconv.Atoi(locNumStr)
 	if err != nil {
-		return errors.New("invalid location number: please provide a number between 1-20")
+		// Create a specific error for this case
+		invalidNumErr := errorhandling.NewInvalidInputError("Invalid location number: please provide a number between 1-20", err)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "explore", invalidNumErr) {
+			return invalidNumErr
+		}
+		return nil
 	}
 
 	// Check if the location list exists
 	if len(cfg.recentLocations) == 0 {
-		return errors.New("no location list available, please run 'map' command first")
+		// Create a specific error for this case
+		noLocationsErr := errorhandling.NewInvalidInputError("No location list available, please run the 'map' command first", nil)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "explore", noLocationsErr) {
+			return noLocationsErr
+		}
+		return nil
 	}
 
 	// Check if the number is in range (1-based indexing)
 	if locationNumber < 1 || locationNumber > len(cfg.recentLocations) {
-		return fmt.Errorf("location number %d is out of range", locationNumber)
+		// Create a specific error for this case
+		outOfRangeErr := errorhandling.NewInvalidInputError(
+			fmt.Sprintf("Location number %d is out of range (valid range: 1-%d)",
+				locationNumber, len(cfg.recentLocations)), nil)
+
+		// Use standardized error handling
+		if HandleCommandError(cfg, "explore", outOfRangeErr) {
+			return outOfRangeErr
+		}
+		return nil
 	}
 
 	// Convert from 1-based user input to 0-based array index
@@ -67,14 +95,22 @@ func commandExplore(cfg *config, params []string) error {
 	// Make the API request to explore the location
 	resp, err := cfg.pokeapiClient.ExploreLocation(apiLocationName)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "explore", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Display the Pokémon found at this location
-	fmt.Println("Found Pokémon:")
-	for _, encounter := range resp.PokemonEncounters {
-		formattedName := FormatPokemonName(encounter.Pokemon.Name)
-		fmt.Printf(" - %s\n", formattedName)
+	if len(resp.PokemonEncounters) == 0 {
+		fmt.Println("No Pokémon found at this location.")
+	} else {
+		fmt.Println("Found Pokémon:")
+		for i, encounter := range resp.PokemonEncounters {
+			formattedName := FormatPokemonName(encounter.Pokemon.Name)
+			fmt.Printf("%d. %s\n", i+1, formattedName)
+		}
 	}
 	fmt.Println("-----")
 	return nil

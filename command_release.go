@@ -18,7 +18,11 @@ func commandRelease(cfg *config, params []string) error {
 	// Use the utility function to validate the Pokemon parameter and check if it exists
 	apiName, nameInfo, _, _, err := GetPokemonIfExists(cfg, params)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "release", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Lock the config before modifying the pokedex
@@ -32,7 +36,11 @@ func commandRelease(cfg *config, params []string) error {
 
 	// Auto-save after releasing a Pokémon
 	if err := UpdatePokedexAndSave(cfg); err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "release", err) {
+			return err
+		}
+		return nil
 	}
 
 	return nil

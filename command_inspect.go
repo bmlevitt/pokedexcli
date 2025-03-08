@@ -23,13 +23,21 @@ func commandInspect(cfg *config, params []string) error {
 	// Use the utility function to validate the Pokemon parameter and check if it exists
 	_, nameInfo, pokemonData, _, err := GetPokemonIfExists(cfg, params)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "inspect", err) {
+			return err
+		}
+		return nil
 	}
 
 	// The Pokemon exists, so convert to the typed data structure
 	data, err := GetTypedPokemonData(pokemonData, nameInfo.Formatted)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "inspect", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Display Pokemon information

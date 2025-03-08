@@ -24,18 +24,30 @@ func commandShowOff(cfg *config, params []string) error {
 	// Use the utility function to validate the Pokemon parameter and check if it exists
 	_, nameInfo, pokemonData, _, err := GetPokemonIfExists(cfg, params)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "showoff", err) {
+			return err
+		}
+		return nil
 	}
 
 	// The Pokemon exists, so convert to the typed data structure
 	pokemon, err := GetTypedPokemonData(pokemonData, nameInfo.Formatted)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "showoff", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Check if the pokemon has any moves
 	if len(pokemon.Moves) == 0 {
-		return fmt.Errorf("%s doesn't know any moves", nameInfo.Formatted)
+		err := fmt.Errorf("%s doesn't know any moves", nameInfo.Formatted)
+		if HandleCommandError(cfg, "showoff", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Select a random move

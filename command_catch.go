@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/bmlevitt/pokedexcli/internal/errorhandling"
 )
 
 // commandCatch attempts to catch a specified Pokémon and add it to the user's Pokédex.
@@ -23,7 +25,11 @@ func commandCatch(cfg *config, params []string) error {
 	// Validate the Pokemon parameter
 	pokemonName, err := ValidatePokemonParam(params)
 	if err != nil {
-		return err
+		// Use standardized error handling
+		if HandleCommandError(cfg, "catch", err) {
+			return err
+		}
+		return nil
 	}
 
 	// Process the Pokémon name input
@@ -32,7 +38,18 @@ func commandCatch(cfg *config, params []string) error {
 	// Fetch pokemon capture rate
 	resp, err := cfg.pokeapiClient.GetPokemonCaptureRate(nameInfo.APIFormat)
 	if err != nil {
-		return err
+		// Check if this is an invalid Pokémon name (doesn't exist) error
+		if errorhandling.IsNotFoundError(err) {
+			// Convert to our standard invalid Pokémon name error
+			invalidNameErr := errorhandling.InvalidPokemonNameError(nameInfo.Formatted)
+			return invalidNameErr
+		}
+
+		// Use standardized error handling for other errors
+		if HandleCommandError(cfg, "catch", err) {
+			return err
+		}
+		return nil
 	}
 
 	captureRate := resp.CaptureRate
@@ -42,7 +59,11 @@ func commandCatch(cfg *config, params []string) error {
 	if caught {
 		pokeData, err := cfg.pokeapiClient.GetPokemonData(nameInfo.APIFormat)
 		if err != nil {
-			return err
+			// Use standardized error handling
+			if HandleCommandError(cfg, "catch", err) {
+				return err
+			}
+			return nil
 		}
 
 		// Lock the config before modifying the pokedex
@@ -54,7 +75,9 @@ func commandCatch(cfg *config, params []string) error {
 
 		// Auto-save after catching a Pokémon
 		if err := UpdatePokedexAndSave(cfg); err != nil {
-			return err
+			// Use standardized error handling but don't return the error
+			// since we still want to show the success message
+			HandleCommandError(cfg, "catch", err)
 		}
 	} else {
 		fmt.Printf("%s escaped!\n", nameInfo.Formatted)
