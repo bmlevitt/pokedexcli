@@ -7,14 +7,17 @@ import (
 	"strings"
 )
 
-// cliCommand represents a command that can be executed in the CLI
+// cliCommand represents a command that can be executed in the CLI.
+// Each command has a name, description, and callback function to execute.
 type cliCommand struct {
 	name        string                        // Name of the command
 	description string                        // Description shown in help
 	callback    func(*config, []string) error // Function to execute when command is called
 }
 
-// getCommands returns a map of all available CLI commands
+// getCommands returns a map of all available CLI commands.
+// This function acts as a registry for all commands supported by the application.
+// New commands should be added here to make them available in the REPL.
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
@@ -85,7 +88,14 @@ func getCommands() map[string]cliCommand {
 	}
 }
 
-// cleanInput normalizes and splits user input into words
+// cleanInput normalizes and splits user input into words.
+// It handles whitespace and converts all text to lowercase for case-insensitive command matching.
+//
+// Parameters:
+//   - text: The raw input string from the user
+//
+// Returns:
+//   - A slice of lowercase words parsed from the input
 func cleanInput(text string) []string {
 	slice := make([]string, 0)
 	words := strings.Fields(text) // Split on whitespace
@@ -98,7 +108,17 @@ func cleanInput(text string) []string {
 	return slice
 }
 
-// startREPL starts the Read-Eval-Print Loop for the Pokedex CLI
+// startREPL starts the Read-Eval-Print Loop for the Pokedex CLI.
+// This is the main interaction loop that:
+//  1. Reads user input (Read)
+//  2. Evaluates the command (Eval)
+//  3. Prints the result (Print)
+//  4. Loops back for the next command
+//
+// The REPL continues until the user explicitly exits using the 'exit' command.
+//
+// Parameters:
+//   - cfg: The application configuration shared across all commands
 func startREPL(cfg *config) {
 	reader := bufio.NewScanner(os.Stdin)
 	var parameters []string

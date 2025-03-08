@@ -7,6 +7,18 @@ import (
 	"strings"
 )
 
+// commandFlavor retrieves and displays flavor text for a Pokémon in the user's Pokédex.
+// Flavor text is descriptive content about the Pokémon from various game versions.
+// The function retrieves the species data, filters for English text entries,
+// and randomly selects one to display alongside the Pokémon's category (genus).
+//
+// Parameters:
+//   - cfg: The application configuration containing the Pokédex and API client
+//   - params: Command parameters where params[0] is the Pokémon name
+//
+// Returns:
+//   - An error if the Pokémon is not in the Pokédex, if no flavor text is available,
+//     or if there's an issue with the API request
 func commandFlavor(cfg *config, params []string) error {
 	// Check for pokemon name parameter
 	if len(params) == 0 {
@@ -70,6 +82,13 @@ func commandFlavor(cfg *config, params []string) error {
 }
 
 // cleanFlavorText cleans up the flavor text by removing newlines and form feeds
+// and normalizes spacing for better readability in the terminal.
+//
+// Parameters:
+//   - text: The raw flavor text string to clean
+//
+// Returns:
+//   - A string with consistent spacing and no control characters
 func cleanFlavorText(text string) string {
 	// Replace newlines and form feeds with spaces
 	cleaned := strings.ReplaceAll(text, "\n", " ")

@@ -6,6 +6,21 @@ import (
 	"math/rand"
 )
 
+// commandDescribe displays form descriptions for a Pokémon in the user's Pokédex.
+// This command retrieves species data which contains descriptive information about
+// the Pokémon's different forms. It filters for English descriptions and randomly
+// selects one to display.
+//
+// If no form descriptions are available in English, the function falls back to
+// displaying the Pokémon's genus (e.g., "Mouse Pokémon").
+//
+// Parameters:
+//   - cfg: The application configuration containing the Pokédex and API client
+//   - params: Command parameters where params[0] is the Pokémon name
+//
+// Returns:
+//   - An error if no Pokémon name is provided, if the Pokémon is not in the Pokédex,
+//     or if there's an issue with the API request
 func commandDescribe(cfg *config, params []string) error {
 	// Check for pokemon name parameter
 	if len(params) == 0 {

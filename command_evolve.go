@@ -9,6 +9,23 @@ import (
 	"github.com/bmlevitt/pokedexcli/internal/pokeapi"
 )
 
+// commandEvolve evolves a Pokémon in the user's Pokédex into its next evolution.
+// This command simulates the evolution mechanic from the Pokémon games by replacing
+// the original Pokémon in the Pokédex with its evolved form.
+//
+// If a Pokémon has multiple possible evolutions, the user is prompted to choose
+// which evolution they want. They can specify an evolution either by number or name
+// as an additional parameter, or select from a menu if no choice is provided.
+//
+// Parameters:
+//   - cfg: The application configuration containing the Pokédex and API client
+//   - params: Command parameters where params[0] is the Pokémon to evolve and
+//     params[1] (optional) is the evolution selection
+//
+// Returns:
+//   - An error if no Pokémon name is provided, if the Pokémon is not in the Pokédex,
+//     if the Pokémon cannot evolve further, if an invalid selection is made,
+//     or if there's an issue with the API request
 func commandEvolve(cfg *config, params []string) error {
 	// Check for pokemon name parameter
 	if len(params) == 0 {
@@ -103,8 +120,19 @@ func commandEvolve(cfg *config, params []string) error {
 	return nil
 }
 
-// findEvolutionsFor recursively searches the evolution chain for the specified Pokemon
-// and returns its possible evolutions
+// findEvolutionsFor recursively searches the evolution chain for a specified Pokémon
+// and returns its possible evolutions.
+//
+// This helper function traverses the evolution chain structure to find where the
+// target Pokémon exists in the chain, then returns the next evolutions in the sequence.
+//
+// Parameters:
+//   - pokemonName: The name of the Pokémon to find in the evolution chain
+//   - chainLink: The current node in the evolution chain to search
+//
+// Returns:
+//   - A slice of ChainLink objects representing possible evolutions
+//   - An error if the Pokémon is not found in the evolution chain
 func findEvolutionsFor(pokemonName string, chainLink pokeapi.ChainLink) ([]pokeapi.ChainLink, error) {
 	// Check if this is the Pokemon we're looking for
 	if strings.EqualFold(chainLink.Species.Name, pokemonName) {
