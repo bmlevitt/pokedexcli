@@ -1,5 +1,7 @@
 # PokédexCLI
 
+## Contributing
+
 A feature-rich, interactive Pokémon encyclopedia right in your terminal! PokédexCLI is a command-line application that lets you explore the Pokémon world, catch your favorite Pokémon, and build your collection.
 
 <p align="center">
